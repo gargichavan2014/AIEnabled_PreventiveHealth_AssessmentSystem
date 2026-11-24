@@ -253,7 +253,7 @@ function renderReport(record) {
 
   const disclaimer = element("div", "report-disclaimer");
   disclaimer.append(element("strong", "", "Clinical decision support only — not a diagnosis. "));
-  disclaimer.append(document.createTextNode("This record contains visual observations and patient-provided context only. It does not infer a medical condition or provide treatment advice. Image quality, lighting and capture conditions may limit interpretation. A qualified practitioner must review the original image, context and this report and determine any appropriate next steps."));
+  disclaimer.append(document.createTextNode("Visual observations and patient-provided context are documented separately from any clinical impression, tests or plan entered by the practitioner. The prototype does not infer diagnoses, recommend investigations or provide treatment advice. Image quality, lighting and capture conditions may limit interpretation. A qualified practitioner must review the original image, full clinical context and report and determine any appropriate next steps."));
   report.append(disclaimer);
   const metadata = element("div", "report-meta");
   metadata.append(element("span", "", `Record ID: ${record.id}`));

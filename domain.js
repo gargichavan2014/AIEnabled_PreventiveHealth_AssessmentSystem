@@ -49,6 +49,9 @@
         dentalVisit: String(input.dentalVisit ?? "").trim(),
       },
       notes: String(input.notes ?? "").trim(),
+      clinicalImpression: String(input.clinicalImpression ?? "").trim(),
+      testsConsidered: String(input.testsConsidered ?? "").trim(),
+      practitionerPlan: String(input.practitionerPlan ?? "").trim(),
       reviewer: reviewed ? String(input.reviewer).trim() : "",
       reviewedAt: reviewed ? timestamp : null,
     };
@@ -88,6 +91,11 @@
         `Alcohol use: ${record.preventiveContext?.alcohol || "Not discussed"}`,
         `Oral hygiene routine: ${record.preventiveContext?.oralHygiene || "Not discussed"}`,
         `Dental visit: ${record.preventiveContext?.dentalVisit || "Not discussed"}`,
+      ] },
+      { title: "Practitioner assessment & plan (clinician-entered)", lines: [
+        `Clinical impression / working diagnosis: ${record.clinicalImpression || "Not entered by practitioner"}`,
+        `Tests or investigations considered: ${record.testsConsidered || "Not entered by practitioner"}`,
+        `Practitioner plan / follow-up: ${record.practitionerPlan || "Not entered by practitioner"}`,
       ] },
       { title: "Practitioner notes", lines: [record.notes || "None recorded"] },
     ];

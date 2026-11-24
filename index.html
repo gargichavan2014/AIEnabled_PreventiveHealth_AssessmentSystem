@@ -132,12 +132,17 @@
                     <label class="field"><span>Dental visit</span><select name="dentalVisit"><option value="">Not discussed</option><option>Reports routine dental visits</option><option>Reports no recent dental visit</option><option>Not recorded</option></select></label>
                   </div>
                   <label class="field"><span>Additional practitioner notes</span><textarea name="notes" rows="3" placeholder="Optional notes, limitations or follow-up questions"></textarea></label>
+                  <div class="subsection-label">Practitioner assessment &amp; plan</div>
+                  <p class="field-hint">Optional clinician-entered content after full clinical evaluation. The prototype does not generate diagnoses or recommend investigations.</p>
+                  <label class="field"><span>Clinical impression / working diagnosis</span><textarea name="clinicalImpression" rows="3" placeholder="Practitioner-authored impression; leave blank if not established"></textarea></label>
+                  <label class="field"><span>Tests or investigations considered</span><textarea name="testsConsidered" rows="3" placeholder="Enter only investigations you determine are appropriate for this patient"></textarea></label>
+                  <label class="field"><span>Practitioner plan / follow-up</span><textarea name="practitionerPlan" rows="3" placeholder="Practitioner-authored next steps or follow-up"></textarea></label>
                 </section>
 
                 <section class="panel form-panel review-panel">
                   <div class="section-title"><span class="step-number">05</span><div><h2>Review &amp; save</h2><p>Every report requires qualified practitioner review.</p></div></div>
                   <label class="field"><span>Practitioner name</span><input name="reviewer" autocomplete="off" placeholder="Enter name when completing review"></label>
-                  <label class="check-field"><input name="reviewed" type="checkbox"><span><strong>Mark as reviewed</strong><small>Confirm you have reviewed the image, context and generated report. Leave unchecked to save as awaiting review.</small></span></label>
+                  <label class="check-field"><input name="reviewed" type="checkbox"><span><strong>Mark as reviewed</strong><small>Confirm you have reviewed the image, context and report, including any assessment and plan you entered. Leave unchecked to save as awaiting review.</small></span></label>
                   <label class="check-field consent-check"><input name="consent" type="checkbox" required><span><strong>Demo consent confirmed <b>*</b></strong><small>Patient consent for image capture and local demo storage has been confirmed. Use synthetic data only.</small></span></label>
                   <div id="form-error" class="form-error" role="alert" hidden></div>
                   <div class="form-actions"><button class="button button-secondary" type="submit" name="saveMode" value="draft">Save draft</button><button class="button button-primary" type="submit" name="saveMode" value="reviewed">Save reviewed report <span aria-hidden="true">→</span></button></div>

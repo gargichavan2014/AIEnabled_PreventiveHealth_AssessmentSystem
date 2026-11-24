@@ -65,7 +65,23 @@ test("structured reports contain observations and no diagnostic inference", () =
   const report = sections.flatMap((section) => [section.title, ...section.lines]).join("\n");
   assert.match(report, /Appears pink/);
   assert.match(report, /Symptoms or concerns: Not recorded/);
-  assert.doesNotMatch(report, /diagnos(?:is|e|ed)|disease|treatment/i);
+  assert.match(report, /Clinical impression \/ working diagnosis: Not entered by practitioner/);
+  assert.match(report, /Tests or investigations considered: Not entered by practitioner/);
+  assert.match(report, /Practitioner plan \/ follow-up: Not entered by practitioner/);
+  assert.doesNotMatch(report, /AI[- ](?:recommended|diagnosis)|auto-generated diagnosis/i);
+});
+
+test("report carries practitioner-entered impression and investigation planning without generating either", () => {
+  const record = createAssessmentRecord({
+    ...validInput,
+    clinicalImpression: "Practitioner-entered impression",
+    testsConsidered: "Practitioner-selected investigations",
+    practitionerPlan: "Practitioner-entered follow-up plan",
+  });
+  const section = buildReportSections(record).find((item) => item.title === "Practitioner assessment & plan (clinician-entered)");
+  assert.match(section.lines[0], /Practitioner-entered impression/);
+  assert.match(section.lines[1], /Practitioner-selected investigations/);
+  assert.match(section.lines[2], /Practitioner-entered follow-up plan/);
 });
 
 test("saved reports preserve patient-reported prevention context", () => {
