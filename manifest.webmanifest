@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "Preventive Health Assessment",
+  "short_name": "Careform",
+  "description": "A practitioner-led tongue observation and preventive health assessment demo.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f8f6",
+  "theme_color": "#f5f8f6",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
