@@ -353,17 +353,13 @@ document.querySelector("#history-search").addEventListener("keydown", (event) =>
 });
 document.querySelector("#print-report").addEventListener("click", () => window.print());
 document.querySelector("#load-synthetic-samples").addEventListener("click", () => {
-  const existingIds = new Set(assessments.map((record) => record.id));
-  const newSamples = syntheticSampleAssessments.filter((record) => !existingIds.has(record.id));
+  const sampleIds = new Set(syntheticSampleAssessments.map((record) => record.id));
+  const hasExistingSamples = assessments.some((record) => record.isSynthetic && sampleIds.has(record.id));
+  const otherAssessments = assessments.filter((record) => !(record.isSynthetic && sampleIds.has(record.id)));
   const status = document.querySelector("#sample-data-status");
-  if (newSamples.length === 0) {
-    status.textContent = "Synthetic sample records are already loaded in this browser.";
-    status.hidden = false;
-    return;
-  }
   try {
-    persistAssessments([...newSamples, ...assessments]);
-    status.textContent = `Loaded ${newSamples.length} fictional sample reports. Open any report to review the demonstration.`;
+    persistAssessments([...syntheticSampleAssessments, ...otherAssessments]);
+    status.textContent = `${hasExistingSamples ? "Refreshed" : "Loaded"} ${syntheticSampleAssessments.length} fictional sample reports. Open any report to review the demonstration.`;
     status.hidden = false;
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : "The synthetic sample records could not be loaded.";
