@@ -1,4 +1,4 @@
-const CACHE_NAME = "careform-static-v3";
+const CACHE_NAME = "careform-static-v5";
 const APP_SHELL = [
   "./",
   "./index.html",

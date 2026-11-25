@@ -3,6 +3,37 @@
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.AssessmentDomain = api;
 }(globalThis, function () {
+  function calculateBMI(heightCm, weightKg) {
+    const height = Number(heightCm);
+    const weight = Number(weightKg);
+    if (!String(heightCm ?? "").trim() || !String(weightKg ?? "").trim()) return null;
+    if (!Number.isFinite(height) || !Number.isFinite(weight) || height <= 0 || weight <= 0) return null;
+    return weight / ((height / 100) ** 2);
+  }
+
+  function interpretBMI(bmi, age) {
+    if (bmi === null || !Number.isFinite(Number(bmi))) {
+      return "Not calculated — enter both height and weight.";
+    }
+    if (age === undefined || age === null || String(age).trim() === "") {
+      return "BMI calculated; age is needed to select an appropriate reference. No category assigned.";
+    }
+    const years = Number(age);
+    if (!Number.isFinite(years)) {
+      return "Age could not be interpreted; no BMI category assigned.";
+    }
+    if (years < 2) {
+      return "For children under 2, use weight-for-length/height growth standards; no BMI category assigned.";
+    }
+    if (years < 20) {
+      return "For ages 2–19, BMI requires age- and sex-specific growth-chart interpretation. This prototype does not calculate a percentile or z-score.";
+    }
+    if (bmi < 18.5) return "Adult BMI screening reference: underweight (CDC); not a diagnosis.";
+    if (bmi < 25) return "Adult BMI screening reference: healthy-weight range (CDC); not a diagnosis.";
+    if (bmi < 30) return "Adult BMI screening reference: overweight range (CDC); not a diagnosis.";
+    return "Adult BMI screening reference: obesity range (CDC); not a diagnosis.";
+  }
+
   function normalizePatientId(value) {
     return String(value ?? "").trim().toUpperCase();
   }
@@ -28,6 +59,7 @@
       ["heartRateBpm", "Heart rate", 20, 250],
       ["systolicMmHg", "Systolic blood pressure", 40, 300],
       ["diastolicMmHg", "Diastolic blood pressure", 20, 200],
+      ["painScore", "Patient-reported pain score", 0, 10],
     ];
     for (const [field, label, min, max] of numericFields) {
       const value = input[field];
@@ -49,6 +81,8 @@
       date: input.date,
       age: String(input.age ?? "").trim(),
       sex: String(input.sex ?? "").trim(),
+      country: String(input.country ?? "").trim(),
+      bmi: calculateBMI(input.heightCm, input.weightKg),
       createdAt: timestamp,
       captureSetting: String(input.captureSetting ?? ""),
       heightCm: String(input.heightCm ?? "").trim(),
@@ -65,6 +99,9 @@
       otherFeatures: String(input.otherFeatures ?? "").trim(),
       certainty: String(input.certainty ?? ""),
       symptoms: String(input.symptoms ?? "").trim(),
+      symptomDuration: String(input.symptomDuration ?? "").trim(),
+      painScore: String(input.painScore ?? "").trim(),
+      dryMouth: String(input.dryMouth ?? "").trim(),
       hydration: String(input.hydration ?? "").trim(),
       medications: String(input.medications ?? "").trim(),
       preventiveContext: {
@@ -91,6 +128,7 @@
   }
 
   function buildReportSections(record) {
+    const bmi = record.bmi ?? calculateBMI(record.heightCm, record.weightKg);
     return [
       { title: "Patient & visit", lines: [
         `Patient ID: ${record.patientId}`,
@@ -98,6 +136,7 @@
         `Assessment date: ${record.date}`,
         `Age: ${record.age ? `${record.age} years` : "Not recorded"}`,
         `Sex: ${record.sex || "Not recorded"}`,
+        `Country / region: ${record.country || "Not recorded"}`,
         `Capture setting: ${record.captureSetting || "Not recorded"}`,
       ] },
       { title: "Vital signs & measurements (clinician-entered)", lines: [
@@ -106,6 +145,12 @@
         `Body temperature: ${record.temperatureC ? `${record.temperatureC} °C` : "Not recorded"}`,
         `Blood pressure: ${record.systolicMmHg || record.diastolicMmHg ? `${record.systolicMmHg || "—"} / ${record.diastolicMmHg || "—"} mmHg` : "Not recorded"}`,
         `Heart rate: ${record.heartRateBpm ? `${record.heartRateBpm} beats/min` : "Not recorded"}`,
+      ] },
+      { title: "BMI screening summary", lines: [
+        `BMI: ${bmi === null ? "Not calculated" : `${bmi.toFixed(1)} kg/m²`}`,
+        interpretBMI(bmi, record.age),
+        `Country / regional reference: ${record.country || "Not recorded"}; local or population-specific guidance was not selected automatically.`,
+        "BMI is a screening measure and does not diagnose a condition; interpret alongside clinical history and examination.",
       ] },
       { title: "Visual observations", lines: [
         `Color: ${record.color || "Not assessed"}`,
@@ -117,6 +162,9 @@
       ] },
       { title: "Patient-provided context", lines: [
         `Symptoms or concerns: ${record.symptoms || "Not recorded"}`,
+        `Symptom duration: ${record.symptomDuration || "Not recorded"}`,
+        `Pain score (patient-reported, 0–10): ${record.painScore || "Not recorded"}`,
+        `Dry mouth (patient-reported): ${record.dryMouth || "Not discussed"}`,
         `Hydration / recent intake: ${record.hydration || "Not recorded"}`,
         `Medications / changes: ${record.medications || "Not recorded"}`,
       ] },
@@ -135,5 +183,5 @@
     ];
   }
 
-  return { buildReportSections, createAssessmentRecord, getPatientTimeline, normalizePatientId, validateAssessment };
+  return { buildReportSections, calculateBMI, createAssessmentRecord, getPatientTimeline, interpretBMI, normalizePatientId, validateAssessment };
 }));

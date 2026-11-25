@@ -23,6 +23,41 @@
       url: "https://www.cdc.gov/oral-health/about/index.html",
     },
     {
+      organization: "U.S. Centers for Disease Control and Prevention",
+      title: "BMI screening references",
+      summary: "CDC defines adult BMI categories for ages 20+ and recommends age-/sex-specific growth-chart interpretation for children and teens.",
+      points: [
+        "BMI = weight in kilograms divided by height in metres squared.",
+        "CDC adult ranges: underweight <18.5; healthy-weight range 18.5 to <25; overweight 25 to <30; obesity ≥30 kg/m².",
+        "CDC describes BMI as a screening measure to consider with other health information, not a stand-alone diagnosis.",
+      ],
+      scope: "CDC adult categories are for ages 20 and older. Children and teens need age- and sex-specific BMI-for-age assessment; do not apply adult cutoffs.",
+      url: "https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html",
+    },
+    {
+      organization: "World Health Organization",
+      title: "BMI and age-specific growth references",
+      summary: "WHO states BMI is calculated from weight and height and that weight-status cutoffs differ by age group.",
+      points: [
+        "WHO uses BMI ≥25 for adult overweight and ≥30 for adult obesity.",
+        "For children and adolescents, WHO uses age-based growth references rather than adult BMI categories.",
+        "This app calculates BMI only; it does not produce child growth z-scores or percentiles.",
+      ],
+      scope: "WHO global reference. Individual assessment still requires clinical context and the applicable local guidance.",
+      url: "https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight",
+    },
+    {
+      organization: "National Institutes of Health",
+      title: "NIH institutes and centers directory",
+      summary: "An official directory of NIH institutes and centers, provided for research-source discovery.",
+      points: [
+        "An institutional directory is not itself a clinical guideline or a source for this app's BMI thresholds.",
+        "Specific recommendations should cite the relevant primary guideline or study, including population and publication date.",
+      ],
+      scope: "Directory only. No patient data or proprietary institutional datasets are incorporated.",
+      url: "https://www.nih.gov/institutes-nih/list-institutes-centers",
+    },
+    {
       organization: "ICMR–National Institute of Nutrition",
       title: "Dietary Guidelines for Indians, 2024",
       summary: "The official ICMR-NIN booklet is a national nutrition reference for India.",

@@ -93,6 +93,7 @@
                     <label class="field"><span>Assessment date <b>*</b></span><input name="date" type="date" required></label>
                     <label class="field"><span>Age (years)</span><input name="age" type="number" min="0" max="130" step="1" inputmode="numeric" placeholder="e.g. 42"></label>
                     <label class="field"><span>Sex</span><select name="sex"><option value="">Not recorded</option><option>Female</option><option>Male</option><option>Intersex</option><option>Another description</option><option>Prefer not to say</option></select></label>
+                    <label class="field"><span>Country / region</span><input name="country" autocomplete="country-name" placeholder="e.g. India"><small>For clinician-selected local guidance; no country-specific thresholds are applied automatically.</small></label>
                     <label class="field"><span>Capture setting</span><select name="captureSetting"><option value="">Select setting</option><option>Natural daylight</option><option>Clinical lighting</option><option>Other / not recorded</option></select></label>
                   </div>
                   <div class="subsection-label">Vital signs &amp; measurements · clinician-entered</div>
@@ -104,7 +105,12 @@
                     <label class="field"><span>Systolic blood pressure (mmHg)</span><input name="systolicMmHg" type="number" min="40" max="300" step="1" inputmode="numeric" placeholder="e.g. 120"></label>
                     <label class="field"><span>Diastolic blood pressure (mmHg)</span><input name="diastolicMmHg" type="number" min="20" max="200" step="1" inputmode="numeric" placeholder="e.g. 80"></label>
                   </div>
-                  <p class="field-hint">Measurements are optional and recorded as entered. No risk score, BMI, or interpretation is calculated.</p>
+                  <div class="bmi-preview" aria-live="polite">
+                    <span class="bmi-label">BODY MASS INDEX</span>
+                    <strong id="bmi-preview-value">—</strong>
+                    <span id="bmi-preview-interpretation">Enter height and weight to calculate BMI.</span>
+                  </div>
+                  <p class="field-hint">BMI is a screening measure, not a diagnosis. Adult categories are shown only from age 20. For children and teens, use a qualified clinician and age-/sex-specific growth charts. Country-specific standards are not selected automatically.</p>
                 </section>
 
                 <section class="panel form-panel">
@@ -134,6 +140,11 @@
                 <section class="panel form-panel">
                   <div class="section-title"><span class="step-number">04</span><div><h2>Patient-provided context</h2><p>Record context for the practitioner; it is not interpreted automatically.</p></div></div>
                   <label class="field"><span>Symptoms or concerns reported</span><textarea name="symptoms" rows="3" placeholder="Patient's own description, duration and changes"></textarea></label>
+                  <div class="field-grid">
+                    <label class="field"><span>Symptom duration</span><input name="symptomDuration" autocomplete="off" placeholder="e.g. 3 days, 2 weeks"></label>
+                    <label class="field"><span>Pain score (patient-reported, 0–10)</span><input name="painScore" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="Optional"></label>
+                    <label class="field"><span>Dry mouth (patient-reported)</span><select name="dryMouth"><option value="">Not discussed</option><option>Patient reports no</option><option>Patient reports yes</option><option>Patient unsure</option></select></label>
+                  </div>
                   <label class="field"><span>Hydration / recent intake context</span><textarea name="hydration" rows="2" placeholder="As reported by the patient"></textarea></label>
                   <label class="field"><span>Relevant medications or recent changes</span><textarea name="medications" rows="3" placeholder="As reported; verify against the clinical record"></textarea></label>
                   <div class="subsection-label">Preventive context · patient-reported</div>
@@ -173,7 +184,7 @@
 
         <section class="view" id="evidence-view" aria-labelledby="evidence-title">
           <div class="page-heading"><div><div class="eyebrow">PUBLIC-HEALTH REFERENCES</div><h1 id="evidence-title">Evidence &amp; guidance</h1><p class="page-subtitle">A small, cited reference set for general education. No source is used to infer a condition from a tongue image.</p></div></div>
-          <div class="notice notice-clinical"><span class="notice-symbol" aria-hidden="true">i</span><p><strong>Evidence boundary.</strong> These summaries are informational, population-level context—not diagnostic criteria, individualized advice, an AI training set, or a substitute for clinical assessment. Source details and populations matter; consult the original guidance.</p></div>
+          <div class="notice notice-clinical"><span class="notice-symbol" aria-hidden="true">i</span><p><strong>Evidence boundary.</strong> These summaries are informational, population-level context—not a single global protocol, individualized advice, an AI training set, or a substitute for clinical assessment. The BMI screening reference is explicitly cited; it does not interpret tongue images. Institute directories and broad research portfolios are not clinical guidelines.</p></div>
           <div id="evidence-grid" class="evidence-grid evidence-grid-full"></div>
           <p class="page-footnote">References are bundled as a static snapshot; this prototype does not download patient data or automatically sync source content. Follow source links for current guidance. “Mayo Clinic” here means public patient education only; no Mayo Clinic patient records or proprietary datasets are included.</p>
         </section>

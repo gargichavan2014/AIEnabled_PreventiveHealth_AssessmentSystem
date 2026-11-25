@@ -49,10 +49,15 @@ try {
             }
 
             $headerBytes = [System.Text.Encoding]::ASCII.GetBytes("HTTP/1.1 $status`r`nContent-Type: $contentType`r`nContent-Length: $($body.Length)`r`nX-Content-Type-Options: nosniff`r`nCache-Control: no-cache`r`nConnection: close`r`n`r`n")
-            $stream.Write($headerBytes, 0, $headerBytes.Length)
-            if ($body.Length -gt 0) { $stream.Write($body, 0, $body.Length) }
-            $stream.Flush()
-            $reader.Dispose()
+            try {
+                $stream.Write($headerBytes, 0, $headerBytes.Length)
+                if ($body.Length -gt 0) { $stream.Write($body, 0, $body.Length) }
+                $stream.Flush()
+            } catch [System.IO.IOException] {
+                Write-Verbose "Client disconnected before the response finished."
+            } finally {
+                $reader.Dispose()
+            }
         } finally {
             $client.Dispose()
         }

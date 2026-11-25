@@ -2,9 +2,11 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   buildReportSections,
+  calculateBMI,
   createAssessmentRecord,
   getPatientTimeline,
   normalizePatientId,
+  interpretBMI,
   validateAssessment,
 } = require("../domain.js");
 require("../evidence.js");
@@ -47,6 +49,26 @@ test("vital-sign validation accepts blank optional fields and rejects out-of-ran
   ]);
 });
 
+test("BMI uses metric inputs and is only interpreted against adult references at age 20+", () => {
+  assert.equal(calculateBMI("170", "68.5"), 68.5 / (1.7 ** 2));
+  assert.equal(calculateBMI("", "68.5"), null);
+  assert.equal(calculateBMI("0", "68.5"), null);
+  assert.match(interpretBMI(calculateBMI("170", "68.5"), "42"), /Adult BMI screening reference: healthy-weight range/);
+  assert.match(interpretBMI(17, "20"), /underweight/);
+  assert.match(interpretBMI(25, "20"), /overweight/);
+  assert.match(interpretBMI(30, "20"), /obesity/);
+  assert.match(interpretBMI(calculateBMI("170", "68.5"), "19"), /age- and sex-specific growth-chart/);
+  assert.match(interpretBMI(calculateBMI("170", "68.5"), "1"), /weight-for-length\/height/);
+  assert.match(interpretBMI(calculateBMI("170", "68.5"), ""), /age is needed/);
+});
+
+test("patient-reported pain score is optional and restricted to the stated 0–10 scale", () => {
+  assert.deepEqual(validateAssessment(validInput), []);
+  assert.deepEqual(validateAssessment({ ...validInput, painScore: "11" }), [
+    "Patient-reported pain score must be between 0 and 10.",
+  ]);
+});
+
 test("reviewed reports require a practitioner and explicit review confirmation", () => {
   assert.deepEqual(validateAssessment(validInput, { requireReview: true }), []);
   assert.deepEqual(
@@ -63,6 +85,7 @@ test("saved records normalize patient IDs and keep drafts unreviewed", () => {
   assert.equal(record.patientId, "DEMO-001");
   assert.equal(record.reviewedAt, null);
   assert.equal(record.reviewer, "");
+  assert.equal(record.bmi, null);
 });
 
 test("patient timeline includes only matching IDs and sorts newest first", () => {
@@ -105,11 +128,26 @@ test("saved reports preserve patient-reported prevention context", () => {
   assert.match(preventiveSection.lines[1], /Not discussed/);
 });
 
-test("saved reports include entered demographics and vitals without interpreting them", () => {
+test("patient-reported symptom duration, pain and dry-mouth context are saved in the report", () => {
+  const record = createAssessmentRecord({
+    ...validInput,
+    symptoms: "Tongue discomfort",
+    symptomDuration: "3 days",
+    painScore: "4",
+    dryMouth: "Patient reports yes",
+  });
+  const section = buildReportSections(record).find((item) => item.title === "Patient-provided context");
+  assert.match(section.lines.join("\n"), /Symptom duration: 3 days/);
+  assert.match(section.lines.join("\n"), /Pain score \(patient-reported, 0–10\): 4/);
+  assert.match(section.lines.join("\n"), /Dry mouth \(patient-reported\): Patient reports yes/);
+});
+
+test("saved reports include demographics, vitals and age-appropriate BMI screening context", () => {
   const record = createAssessmentRecord({
     ...validInput,
     age: "42",
     sex: "Female",
+    country: "India",
     heightCm: "170",
     weightKg: "68.5",
     temperatureC: "36.8",
@@ -122,6 +160,7 @@ test("saved reports include entered demographics and vitals without interpreting
   const vitals = sections.find((section) => section.title === "Vital signs & measurements (clinician-entered)");
   assert.match(visit.lines.join("\n"), /Age: 42 years/);
   assert.match(visit.lines.join("\n"), /Sex: Female/);
+  assert.match(visit.lines.join("\n"), /Country \/ region: India/);
   assert.deepEqual(vitals.lines, [
     "Height: 170 cm",
     "Weight: 68.5 kg",
@@ -129,11 +168,15 @@ test("saved reports include entered demographics and vitals without interpreting
     "Blood pressure: 120 / 80 mmHg",
     "Heart rate: 72 beats/min",
   ]);
+  const bmi = sections.find((section) => section.title === "BMI screening summary");
+  assert.match(bmi.lines[0], /^BMI: \d+\.\d kg\/m²$/);
+  assert.match(bmi.lines[1], /Adult BMI screening reference: healthy-weight range/);
+  assert.match(bmi.lines[2], /India/);
 });
 
 test("evidence panel contains the four requested public reference sources", () => {
   const organizations = globalThis.HealthEvidence.map((source) => source.organization);
-  assert.equal(organizations.length, 4);
+  assert.equal(organizations.length, 7);
   assert.match(organizations.join(" "), /World Health Organization/);
   assert.match(organizations.join(" "), /Centers for Disease Control and Prevention/);
   assert.match(organizations.join(" "), /ICMR/);

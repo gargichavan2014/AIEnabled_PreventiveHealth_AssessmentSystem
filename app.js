@@ -1,4 +1,4 @@
-const { buildReportSections, createAssessmentRecord, getPatientTimeline, normalizePatientId, validateAssessment } = window.AssessmentDomain;
+const { buildReportSections, calculateBMI, createAssessmentRecord, getPatientTimeline, interpretBMI, normalizePatientId, validateAssessment } = window.AssessmentDomain;
 const healthEvidence = window.HealthEvidence;
 
 const STORAGE_KEY = "careform-demo-assessments-v1";
@@ -125,6 +125,12 @@ function renderEvidence() {
   });
 }
 
+function updateBMIPreview() {
+  const bmi = calculateBMI(form.elements.heightCm.value, form.elements.weightKg.value);
+  document.querySelector("#bmi-preview-value").textContent = bmi === null ? "—" : bmi.toFixed(1);
+  document.querySelector("#bmi-preview-interpretation").textContent = interpretBMI(bmi, form.elements.age.value);
+}
+
 function showFormError(message) {
   formError.textContent = message;
   formError.hidden = !message;
@@ -210,6 +216,7 @@ form.addEventListener("submit", (event) => {
   }
   form.reset();
   form.elements.date.value = new Date().toISOString().slice(0, 10);
+  updateBMIPreview();
   currentImageDataUrl = "";
   preview.hidden = true;
   showFormError("");
@@ -297,7 +304,17 @@ function searchHistory() {
     item.append(element("div", "timeline-date", record.date));
     const text = element("div", "timeline-copy");
     text.append(element("strong", "", [record.color, record.coating].filter(Boolean).join(" · ") || "Observations not recorded"));
-    text.append(element("p", "", record.otherFeatures || record.notes || "No additional notes recorded."));
+    const visitBmi = record.bmi ?? calculateBMI(record.heightCm, record.weightKg);
+    const followUpSummary = [
+      record.symptoms ? `Reported: ${record.symptoms}` : "",
+      record.symptomDuration ? `Duration: ${record.symptomDuration}` : "",
+      record.painScore ? `Pain: ${record.painScore}/10` : "",
+      record.dryMouth ? `Dry mouth: ${record.dryMouth}` : "",
+      record.country ? `Country / region: ${record.country}` : "",
+      visitBmi !== null ? `BMI: ${visitBmi.toFixed(1)}` : "",
+      record.otherFeatures || record.notes,
+    ].filter(Boolean).join(" · ");
+    text.append(element("p", "", followUpSummary || "No additional notes recorded."));
     const open = element("button", "record-open", "Open report");
     open.type = "button";
     open.addEventListener("click", () => renderReport(record));
@@ -321,6 +338,10 @@ document.querySelector("#history-search").addEventListener("keydown", (event) =>
   if (event.key === "Enter") searchHistory();
 });
 document.querySelector("#print-report").addEventListener("click", () => window.print());
+["heightCm", "weightKg", "age"].forEach((name) => {
+  form.elements[name].addEventListener("input", updateBMIPreview);
+});
+updateBMIPreview();
 document.querySelector("#install-app").hidden = false;
 document.querySelector("#today-label").textContent = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date());
 form.elements.date.value = new Date().toISOString().slice(0, 10);
