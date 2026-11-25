@@ -20,6 +20,23 @@
     if (requireReview && !input.reviewed) {
       errors.push("Confirm practitioner review before saving a reviewed report.");
     }
+    const numericFields = [
+      ["age", "Age", 0, 130],
+      ["heightCm", "Height", 30, 250],
+      ["weightKg", "Weight", 1, 500],
+      ["temperatureC", "Body temperature", 25, 45],
+      ["heartRateBpm", "Heart rate", 20, 250],
+      ["systolicMmHg", "Systolic blood pressure", 40, 300],
+      ["diastolicMmHg", "Diastolic blood pressure", 20, 200],
+    ];
+    for (const [field, label, min, max] of numericFields) {
+      const value = input[field];
+      if (value === undefined || value === null || String(value).trim() === "") continue;
+      const number = Number(value);
+      if (!Number.isFinite(number) || number < min || number > max) {
+        errors.push(`${label} must be between ${min} and ${max}.`);
+      }
+    }
     return errors;
   }
 
@@ -30,8 +47,16 @@
       patientId: normalizePatientId(input.patientId),
       patientName: String(input.patientName).trim(),
       date: input.date,
+      age: String(input.age ?? "").trim(),
+      sex: String(input.sex ?? "").trim(),
       createdAt: timestamp,
       captureSetting: String(input.captureSetting ?? ""),
+      heightCm: String(input.heightCm ?? "").trim(),
+      weightKg: String(input.weightKg ?? "").trim(),
+      temperatureC: String(input.temperatureC ?? "").trim(),
+      heartRateBpm: String(input.heartRateBpm ?? "").trim(),
+      systolicMmHg: String(input.systolicMmHg ?? "").trim(),
+      diastolicMmHg: String(input.diastolicMmHg ?? "").trim(),
       imageDataUrl: input.imageDataUrl,
       color: String(input.color ?? ""),
       coating: String(input.coating ?? ""),
@@ -71,7 +96,16 @@
         `Patient ID: ${record.patientId}`,
         `Patient label: ${record.patientName}`,
         `Assessment date: ${record.date}`,
+        `Age: ${record.age ? `${record.age} years` : "Not recorded"}`,
+        `Sex: ${record.sex || "Not recorded"}`,
         `Capture setting: ${record.captureSetting || "Not recorded"}`,
+      ] },
+      { title: "Vital signs & measurements (clinician-entered)", lines: [
+        `Height: ${record.heightCm ? `${record.heightCm} cm` : "Not recorded"}`,
+        `Weight: ${record.weightKg ? `${record.weightKg} kg` : "Not recorded"}`,
+        `Body temperature: ${record.temperatureC ? `${record.temperatureC} °C` : "Not recorded"}`,
+        `Blood pressure: ${record.systolicMmHg || record.diastolicMmHg ? `${record.systolicMmHg || "—"} / ${record.diastolicMmHg || "—"} mmHg` : "Not recorded"}`,
+        `Heart rate: ${record.heartRateBpm ? `${record.heartRateBpm} beats/min` : "Not recorded"}`,
       ] },
       { title: "Visual observations", lines: [
         `Color: ${record.color || "Not assessed"}`,

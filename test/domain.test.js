@@ -33,6 +33,20 @@ test("assessment validation requires consent and an image", () => {
   );
 });
 
+test("vital-sign validation accepts blank optional fields and rejects out-of-range values", () => {
+  assert.deepEqual(validateAssessment(validInput), []);
+  assert.deepEqual(validateAssessment({
+    ...validInput,
+    age: "131",
+    temperatureC: "50",
+    systolicMmHg: "20",
+  }), [
+    "Age must be between 0 and 130.",
+    "Body temperature must be between 25 and 45.",
+    "Systolic blood pressure must be between 40 and 300.",
+  ]);
+});
+
 test("reviewed reports require a practitioner and explicit review confirmation", () => {
   assert.deepEqual(validateAssessment(validInput, { requireReview: true }), []);
   assert.deepEqual(
@@ -89,6 +103,32 @@ test("saved reports preserve patient-reported prevention context", () => {
   const preventiveSection = buildReportSections(record).find((section) => section.title === "Preventive context (patient-reported)");
   assert.match(preventiveSection.lines[0], /Patient reports former use/);
   assert.match(preventiveSection.lines[1], /Not discussed/);
+});
+
+test("saved reports include entered demographics and vitals without interpreting them", () => {
+  const record = createAssessmentRecord({
+    ...validInput,
+    age: "42",
+    sex: "Female",
+    heightCm: "170",
+    weightKg: "68.5",
+    temperatureC: "36.8",
+    heartRateBpm: "72",
+    systolicMmHg: "120",
+    diastolicMmHg: "80",
+  });
+  const sections = buildReportSections(record);
+  const visit = sections.find((section) => section.title === "Patient & visit");
+  const vitals = sections.find((section) => section.title === "Vital signs & measurements (clinician-entered)");
+  assert.match(visit.lines.join("\n"), /Age: 42 years/);
+  assert.match(visit.lines.join("\n"), /Sex: Female/);
+  assert.deepEqual(vitals.lines, [
+    "Height: 170 cm",
+    "Weight: 68.5 kg",
+    "Body temperature: 36.8 °C",
+    "Blood pressure: 120 / 80 mmHg",
+    "Heart rate: 72 beats/min",
+  ]);
 });
 
 test("evidence panel contains the four requested public reference sources", () => {

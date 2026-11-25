@@ -1,6 +1,6 @@
 # Preventive Health Assessment prototype
 
-A dependency-free, browser-only prototype for a practitioner-led tongue image observation workflow. It supports image capture, descriptive observations, patient-provided context, longitudinal follow-up by demo ID, printable structured reports, clinician-entered impressions and investigation planning, and a small source-linked public-health reference panel.
+A dependency-free, browser-only prototype for a practitioner-led tongue image observation workflow. It supports image capture, descriptive observations, patient-provided context, age, sex, height, weight, body temperature, blood pressure and heart rate, longitudinal follow-up by demo ID, printable structured reports, clinician-entered impressions and investigation planning, and a small source-linked public-health reference panel.
 
 ## Install as a browser app
 
@@ -27,6 +27,7 @@ The evidence panel is informational only. Its contents are not used to interpret
 
 - There is no trained or validated AI model in this repository. Images are displayed for practitioner-entered description only; no automated image analysis or diagnosis occurs.
 - Working diagnoses, tests/investigations considered, and follow-up plans in reports are optional practitioner-entered fields. The prototype does not generate these or recommend specific tests.
+- Age, sex and vital signs are optional clinician-entered measurements. Basic range checks prevent implausible entries; the prototype does not calculate BMI, interpret vital signs, or infer a diagnosis from them.
 - Every record requires demo consent and is saved with its image in this browser's unencrypted `localStorage`. Use synthetic data only—never real patient identifiers, photographs or health information.
 - This is not a clinical product, secure record system or substitute for professional evaluation. A qualified practitioner must review every report and determine any next steps.
 - No remote services are called by the app. External sources open only when a user follows a reference link.
