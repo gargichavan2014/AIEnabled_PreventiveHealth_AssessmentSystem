@@ -9,6 +9,7 @@ const {
   interpretBMI,
   validateAssessment,
 } = require("../domain.js");
+const syntheticSamples = require("../sample-data.js");
 require("../evidence.js");
 
 const validInput = {
@@ -86,6 +87,20 @@ test("saved records normalize patient IDs and keep drafts unreviewed", () => {
   assert.equal(record.reviewedAt, null);
   assert.equal(record.reviewer, "");
   assert.equal(record.bmi, null);
+});
+
+test("bundled sample records are fictional, marked synthetic, and do not invent diagnoses", () => {
+  assert.equal(syntheticSamples.length, 3);
+  for (const record of syntheticSamples) {
+    assert.equal(record.isSynthetic, true);
+    assert.match(record.patientId, /^SYNTH-/);
+    assert.equal(record.imageDataUrl, undefined);
+    assert.equal(record.clinicalImpression, "");
+    assert.equal(record.testsConsidered, "");
+    assert.equal(record.practitionerPlan, "");
+  }
+  const child = syntheticSamples.find((record) => record.age === "12");
+  assert.match(buildReportSections(child).find((section) => section.title === "BMI screening summary").lines[1], /age- and sex-specific growth-chart/);
 });
 
 test("patient timeline includes only matching IDs and sorts newest first", () => {
@@ -174,7 +189,7 @@ test("saved reports include demographics, vitals and age-appropriate BMI screeni
   assert.match(bmi.lines[2], /India/);
 });
 
-test("evidence panel contains the four requested public reference sources", () => {
+test("evidence panel contains linked public-reference sources", () => {
   const organizations = globalThis.HealthEvidence.map((source) => source.organization);
   assert.equal(organizations.length, 7);
   assert.match(organizations.join(" "), /World Health Organization/);

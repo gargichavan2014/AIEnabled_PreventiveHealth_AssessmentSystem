@@ -79,6 +79,7 @@
       patientId: normalizePatientId(input.patientId),
       patientName: String(input.patientName).trim(),
       date: input.date,
+      isSynthetic: Boolean(input.isSynthetic),
       age: String(input.age ?? "").trim(),
       sex: String(input.sex ?? "").trim(),
       country: String(input.country ?? "").trim(),

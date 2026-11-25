@@ -1,0 +1,91 @@
+(function (root, factory) {
+  const domain = typeof module === "object" && module.exports
+    ? require("./domain.js")
+    : root.AssessmentDomain;
+  const samples = factory(domain.createAssessmentRecord);
+  if (typeof module === "object" && module.exports) module.exports = samples;
+  else root.SyntheticSampleAssessments = samples;
+}(globalThis, function (createAssessmentRecord) {
+  const examples = [
+    {
+      id: "synthetic-adult-001",
+      createdAt: "2026-11-25T09:00:00.000Z",
+      patientId: "SYNTH-ADULT-001",
+      patientName: "Synthetic adult — BMI example A",
+      date: "2026-11-25",
+      age: "35",
+      sex: "Female",
+      country: "India",
+      captureSetting: "Natural daylight",
+      heightCm: "165",
+      weightKg: "62.5",
+      temperatureC: "36.7",
+      heartRateBpm: "72",
+      systolicMmHg: "118",
+      diastolicMmHg: "76",
+      color: "Appears pink",
+      coating: "Thin / light",
+      moisture: "Appears moist",
+      shape: "No feature noted",
+      certainty: "Not assessed — no image is attached",
+      symptoms: "No active concern stated in this fictional scenario",
+      dryMouth: "Patient reports no",
+      notes: "Fictional values for workflow demonstration only. No image is attached.",
+    },
+    {
+      id: "synthetic-child-002",
+      createdAt: "2026-11-25T08:00:00.000Z",
+      patientId: "SYNTH-CHILD-002",
+      patientName: "Synthetic child — pediatric BMI example",
+      date: "2026-11-25",
+      age: "12",
+      sex: "Male",
+      country: "United States",
+      captureSetting: "Clinical lighting",
+      heightCm: "150",
+      weightKg: "42",
+      temperatureC: "36.8",
+      heartRateBpm: "82",
+      systolicMmHg: "108",
+      diastolicMmHg: "68",
+      color: "Not assessed",
+      coating: "Not assessed",
+      moisture: "Unable to assess",
+      shape: "Unable to assess",
+      certainty: "Not assessed — no image is attached",
+      symptoms: "Example concern field left unspecified",
+      notes: "Fictional values for workflow demonstration only. Pediatric BMI percentile is not calculated; no image is attached.",
+    },
+    {
+      id: "synthetic-adult-003",
+      createdAt: "2026-11-25T07:00:00.000Z",
+      patientId: "SYNTH-ADULT-003",
+      patientName: "Synthetic adult — BMI example B",
+      date: "2026-11-25",
+      age: "52",
+      sex: "Prefer not to say",
+      country: "Canada",
+      captureSetting: "Other / not recorded",
+      heightCm: "160",
+      weightKg: "84",
+      temperatureC: "36.9",
+      heartRateBpm: "76",
+      systolicMmHg: "136",
+      diastolicMmHg: "84",
+      color: "Other appearance",
+      coating: "Patchy / uneven",
+      moisture: "Appears dry",
+      shape: "Visible variation noted",
+      certainty: "Not assessed — no image is attached",
+      symptoms: "Fictional report of intermittent dry mouth",
+      symptomDuration: "2 days (fictional example)",
+      dryMouth: "Patient reports yes",
+      notes: "Fictional values for workflow demonstration only. Vital signs are shown without interpretation; no image is attached.",
+    },
+  ];
+
+  return examples.map(({ id, createdAt, ...input }) => createAssessmentRecord({
+    ...input,
+    isSynthetic: true,
+  }, { id, createdAt }));
+}));

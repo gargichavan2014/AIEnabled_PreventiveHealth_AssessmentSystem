@@ -1,6 +1,6 @@
 # Preventive Health Assessment prototype
 
-A dependency-free, browser-only prototype for a practitioner-led tongue image observation workflow. It supports image capture, descriptive observations, patient-reported symptoms, duration, pain and dry mouth, age, sex, country/region, height, weight, body temperature, blood pressure and heart rate, BMI calculation with age-appropriate reference wording, longitudinal follow-up by demo ID, printable structured reports, clinician-entered impressions and investigation planning, and a source-linked public-health reference panel.
+A dependency-free, browser-only prototype for a practitioner-led tongue image observation workflow. It supports image capture, descriptive observations, patient-reported symptoms, duration, pain and dry mouth, age, sex, country/region, height, weight, body temperature, blood pressure and heart rate, BMI calculation with age-appropriate reference wording, longitudinal follow-up by demo ID, printable structured reports, clinician-entered impressions and investigation planning, and a source-linked public-health reference panel. Three clearly labeled fictional records can be loaded to preview reports.
 
 ## Install as a browser app
 
@@ -11,6 +11,8 @@ There are no app dependencies or build step. The service worker caches only the 
 ```sh
 npm test
 ```
+
+On the Overview page, choose **Load synthetic samples** to add three fictional examples (two adults and one child) to this browser's local demo history. Each appears as a clearly marked synthetic sample and its report states that it is not a real patient; the sample records contain no images and no diagnoses. The samples demonstrate BMI screening wording, including the pediatric growth-chart limitation. They are part of the public prototype code, not real patient data.
 
 ## Included public-health references
 
@@ -31,6 +33,7 @@ The user-listed research organizations do not share one universal primary-assess
 ## Prototype limitations and privacy
 
 - There is no trained or validated AI model in this repository. Images are displayed for practitioner-entered description only; no automated image analysis or diagnosis occurs.
+- The bundled demo records in `sample-data.js` are fictional and for UI demonstration only. Do not replace or supplement them with patient records in the public repository.
 - Working diagnoses, tests/investigations considered, and follow-up plans in reports are optional practitioner-entered fields. The prototype does not generate these or recommend specific tests.
 - Age, sex, country/region and vital signs are optional clinician-entered information. Basic range checks prevent implausible measurements. BMI is calculated from height and weight; its reference wording is limited by age as described above. No vital-sign interpretation or diagnosis is generated.
 - Symptom duration, dry-mouth response and 0–10 pain score are optional patient-reported context; they are recorded for practitioner review and are not interpreted by the prototype.

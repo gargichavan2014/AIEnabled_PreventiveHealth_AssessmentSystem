@@ -1,10 +1,11 @@
-const CACHE_NAME = "careform-static-v5";
+const CACHE_NAME = "careform-static-v6";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
   "./evidence.js",
   "./domain.js",
+  "./sample-data.js",
   "./pwa.js",
   "./app.js",
   "./manifest.webmanifest",

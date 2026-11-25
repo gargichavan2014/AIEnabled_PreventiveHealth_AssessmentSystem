@@ -1,5 +1,6 @@
 const { buildReportSections, calculateBMI, createAssessmentRecord, getPatientTimeline, interpretBMI, normalizePatientId, validateAssessment } = window.AssessmentDomain;
 const healthEvidence = window.HealthEvidence;
+const syntheticSampleAssessments = window.SyntheticSampleAssessments;
 
 const STORAGE_KEY = "careform-demo-assessments-v1";
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -52,6 +53,12 @@ function persistAssessments(nextAssessments) {
 }
 
 function statusPill(record) {
+  if (record.isSynthetic) {
+    const pill = element("span", "status-pill synthetic-pill");
+    pill.append(element("span"));
+    pill.append(document.createTextNode("Synthetic sample"));
+    return pill;
+  }
   const reviewed = Boolean(record.reviewedAt);
   const pill = element("span", `status-pill${reviewed ? " reviewed" : ""}`);
   pill.append(element("span"));
@@ -64,6 +71,7 @@ function addRecordRow(container, record) {
   const main = element("div", "record-main");
   main.append(element("strong", "", record.patientName));
   main.append(element("small", "", `ID ${record.patientId}`));
+  if (record.isSynthetic) main.append(element("small", "synthetic-record-label", "FICTIONAL DEMO DATA"));
   const date = element("div", "record-meta");
   date.append(element("strong", "", record.date));
   date.append(element("small", "", record.captureSetting || "Setting not recorded"));
@@ -80,7 +88,7 @@ function renderDashboard() {
   const patientIds = new Set(assessments.map((record) => normalizePatientId(record.patientId)).filter(Boolean));
   document.querySelector("#patient-count").textContent = String(patientIds.size);
   document.querySelector("#assessment-count").textContent = String(assessments.length);
-  document.querySelector("#review-count").textContent = String(assessments.filter((record) => !record.reviewedAt).length);
+  document.querySelector("#review-count").textContent = String(assessments.filter((record) => !record.reviewedAt && !record.isSynthetic).length);
   const container = document.querySelector("#recent-list");
   container.replaceChildren();
   const recent = assessments.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
@@ -236,12 +244,18 @@ function renderReport(record) {
   report.replaceChildren();
   const header = element("div", "report-topline");
   const title = element("div");
-  title.append(element("h2", "", "Tongue observation record"));
-  title.append(element("p", "", "Descriptive observations and patient-provided context"));
+  title.append(element("h2", "", record.isSynthetic ? "Synthetic sample assessment report" : "Tongue observation record"));
+  title.append(element("p", "", record.isSynthetic ? "Fictional workflow example — not a clinical diagnosis" : "Descriptive observations and patient-provided context"));
   const status = element("div", "report-status");
   status.append(statusPill(record));
   header.append(title, status);
   report.append(header);
+  if (record.isSynthetic) {
+    const sampleBanner = element("div", "sample-report-banner");
+    sampleBanner.append(element("strong", "", "SYNTHETIC SAMPLE — NOT A REAL PATIENT"));
+    sampleBanner.append(element("p", "", "Fictional values are shown only to demonstrate the prototype. No diagnosis, test recommendation, or treatment plan is generated."));
+    report.append(sampleBanner);
+  }
 
   const grid = element("div", "report-grid");
   buildReportSections(record).forEach((section) => grid.append(reportSection(section)));
@@ -253,7 +267,7 @@ function renderReport(record) {
     image.alt = "Tongue image provided for this observation record";
     imageSection.append(image);
   } else {
-    imageSection.append(element("p", "", "No saved image."));
+    imageSection.append(element("p", "", record.isSynthetic ? "No image is included in this synthetic sample." : "No saved image."));
   }
   grid.append(imageSection);
   report.append(grid);
@@ -338,6 +352,24 @@ document.querySelector("#history-search").addEventListener("keydown", (event) =>
   if (event.key === "Enter") searchHistory();
 });
 document.querySelector("#print-report").addEventListener("click", () => window.print());
+document.querySelector("#load-synthetic-samples").addEventListener("click", () => {
+  const existingIds = new Set(assessments.map((record) => record.id));
+  const newSamples = syntheticSampleAssessments.filter((record) => !existingIds.has(record.id));
+  const status = document.querySelector("#sample-data-status");
+  if (newSamples.length === 0) {
+    status.textContent = "Synthetic sample records are already loaded in this browser.";
+    status.hidden = false;
+    return;
+  }
+  try {
+    persistAssessments([...newSamples, ...assessments]);
+    status.textContent = `Loaded ${newSamples.length} fictional sample reports. Open any report to review the demonstration.`;
+    status.hidden = false;
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : "The synthetic sample records could not be loaded.";
+    status.hidden = false;
+  }
+});
 ["heightCm", "weightKg", "age"].forEach((name) => {
   form.elements[name].addEventListener("input", updateBMIPreview);
 });

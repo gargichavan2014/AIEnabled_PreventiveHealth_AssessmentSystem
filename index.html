@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="styles.css">
     <script defer src="evidence.js"></script>
     <script defer src="domain.js"></script>
+    <script defer src="sample-data.js"></script>
     <script defer src="pwa.js"></script>
     <script defer src="app.js"></script>
   </head>
@@ -52,10 +53,12 @@
         <section class="view active" id="dashboard-view" aria-labelledby="dashboard-title">
           <div class="page-heading">
             <div><div class="eyebrow">YOUR CLINICAL WORKSPACE</div><h1 id="dashboard-title">Overview</h1><p class="page-subtitle">A clear record of tongue observations and patient-provided context.</p></div>
-            <button class="button button-primary" data-go="assessment" type="button"><span aria-hidden="true">＋</span> Start assessment</button>
+            <div class="page-actions"><button class="button button-secondary" id="load-synthetic-samples" type="button">Load synthetic samples</button><button class="button button-primary" data-go="assessment" type="button"><span aria-hidden="true">＋</span> Start assessment</button></div>
           </div>
 
           <div class="notice notice-clinical"><span class="notice-symbol" aria-hidden="true">!</span><p><strong>Clinical decision support only.</strong> This prototype does not analyze images or diagnose conditions. A qualified practitioner must review every observation and report.</p></div>
+          <div class="sample-data-notice"><strong>Synthetic demo data only.</strong> Sample records are fictional and included to demonstrate report layouts; they are not real patients and contain no diagnoses.</div>
+          <p id="sample-data-status" class="field-hint" role="status" hidden></p>
 
           <div class="metric-grid" aria-label="Workspace summary">
             <article class="metric-card"><div class="metric-label">PATIENTS RECORDED <span class="metric-icon">♙</span></div><strong id="patient-count">0</strong><small>Unique patient IDs</small></article>
