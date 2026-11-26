@@ -128,62 +128,9 @@
       .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   }
 
-  function buildAssessmentSummary(record) {
-    const bmi = record.bmi ?? calculateBMI(record.heightCm, record.weightKg);
-    const patientDetails = [
-      record.age ? `${record.age} years` : "",
-      record.sex || "",
-      record.country || "",
-    ].filter(Boolean);
-    const measurements = [
-      record.temperatureC ? `temperature ${record.temperatureC} °C` : "",
-      record.systolicMmHg || record.diastolicMmHg
-        ? `blood pressure ${record.systolicMmHg || "—"} / ${record.diastolicMmHg || "—"} mmHg`
-        : "",
-      record.heartRateBpm ? `heart rate ${record.heartRateBpm} beats/min` : "",
-    ].filter(Boolean);
-    const observations = [
-      record.color && !/not assessed/i.test(record.color) ? `color: ${record.color}` : "",
-      record.coating && !/not assessed/i.test(record.coating) ? `coating: ${record.coating}` : "",
-      record.moisture && !/not assessed|unable to assess/i.test(record.moisture) ? `moisture: ${record.moisture}` : "",
-      record.shape && !/not assessed|unable to assess/i.test(record.shape) ? `shape/surface: ${record.shape}` : "",
-      record.otherFeatures || "",
-    ].filter(Boolean);
-    const context = [
-      record.symptoms ? `reported concern: ${record.symptoms}` : "",
-      record.symptomDuration ? `duration: ${record.symptomDuration}` : "",
-      record.painScore ? `reported pain score: ${record.painScore}/10` : "",
-      record.dryMouth && record.dryMouth !== "Not discussed" ? `dry mouth: ${record.dryMouth}` : "",
-      record.hydration ? `hydration/recent intake: ${record.hydration}` : "",
-      record.medications ? `medications: ${record.medications}` : "",
-      record.preventiveContext?.tobacco && record.preventiveContext.tobacco !== "Not discussed"
-        ? `tobacco/areca use: ${record.preventiveContext.tobacco}`
-        : "",
-      record.preventiveContext?.alcohol && record.preventiveContext.alcohol !== "Not discussed"
-        ? `alcohol use: ${record.preventiveContext.alcohol}`
-        : "",
-    ].filter(Boolean);
-
-    return [
-      `Patient/visit: ${record.patientName || "Not recorded"}${patientDetails.length ? `; ${patientDetails.join(", ")}` : ""}${record.date ? `; assessed ${record.date}` : ""}.`,
-      `Measurements entered: ${[
-        record.heightCm ? `height ${record.heightCm} cm` : "",
-        record.weightKg ? `weight ${record.weightKg} kg` : "",
-        ...measurements,
-      ].filter(Boolean).join("; ") || "none recorded"}.`,
-      `BMI screening: ${bmi === null ? "not calculated" : `${bmi.toFixed(1)} kg/m²`}; ${interpretBMI(bmi, record.age)}`,
-      `Tongue image: ${record.imageDataUrl ? "provided for practitioner review; not analyzed by this prototype" : "not provided"}.`,
-      `Tongue observations entered: ${observations.join("; ") || "none recorded"}.`,
-      `Patient-reported context: ${context.join("; ") || "none recorded"}.`,
-      `Diagnosis: ${record.clinicalImpression || "not generated automatically; practitioner impression not entered"}.`,
-      "This summary organizes the entered information only. It does not interpret vital signs or tongue appearance, diagnose a condition, or recommend tests or treatment.",
-    ];
-  }
-
   function buildReportSections(record) {
     const bmi = record.bmi ?? calculateBMI(record.heightCm, record.weightKg);
     return [
-      { title: "Generated assessment summary (non-diagnostic)", lines: buildAssessmentSummary(record) },
       { title: "Patient & visit", lines: [
         `Patient ID: ${record.patientId}`,
         `Patient label: ${record.patientName}`,
@@ -228,8 +175,8 @@
         `Oral hygiene routine: ${record.preventiveContext?.oralHygiene || "Not discussed"}`,
         `Dental visit: ${record.preventiveContext?.dentalVisit || "Not discussed"}`,
       ] },
-      { title: "Practitioner assessment & plan (clinician-entered)", lines: [
-        `Clinical impression / working diagnosis: ${record.clinicalImpression || "Not entered by practitioner"}`,
+      { title: "Diagnosis report: clinician-entered findings & plan", lines: [
+        `Clinical diagnosis / impression: ${record.clinicalImpression || "Not entered by practitioner"}`,
         `Tests or investigations considered: ${record.testsConsidered || "Not entered by practitioner"}`,
         `Practitioner plan / follow-up: ${record.practitionerPlan || "Not entered by practitioner"}`,
       ] },
@@ -237,5 +184,5 @@
     ];
   }
 
-  return { buildAssessmentSummary, buildReportSections, calculateBMI, createAssessmentRecord, getPatientTimeline, interpretBMI, normalizePatientId, validateAssessment };
+  return { buildReportSections, calculateBMI, createAssessmentRecord, getPatientTimeline, interpretBMI, normalizePatientId, validateAssessment };
 }));

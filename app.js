@@ -21,7 +21,7 @@ function showView(name) {
   document.querySelectorAll(".nav-link").forEach((link) => {
     link.classList.toggle("active", link.dataset.view === name);
   });
-  const titles = { dashboard: "Overview", assessment: "New assessment", history: "Patient history", evidence: "Evidence & guidance", report: "Assessment report" };
+  const titles = { dashboard: "Overview", assessment: "New assessment", history: "Patient history", evidence: "Evidence & guidance", report: "Diagnosis report" };
   document.querySelector("#breadcrumb-current").textContent = titles[name] ?? "Overview";
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -244,8 +244,8 @@ function renderReport(record) {
   report.replaceChildren();
   const header = element("div", "report-topline");
   const title = element("div");
-  title.append(element("h2", "", record.isSynthetic ? "Synthetic sample assessment report" : "Tongue observation record"));
-  title.append(element("p", "", record.isSynthetic ? "Fictional workflow example — not a clinical diagnosis" : "Descriptive observations and patient-provided context"));
+  title.append(element("h2", "", record.isSynthetic ? "Synthetic diagnosis-report template" : "Diagnosis report"));
+  title.append(element("p", "", record.isSynthetic ? "Fictional example — diagnosis field is for clinician completion" : "Recorded parameters and clinician-entered diagnostic conclusion"));
   const status = element("div", "report-status");
   status.append(statusPill(record));
   header.append(title, status);
@@ -274,7 +274,7 @@ function renderReport(record) {
 
   const disclaimer = element("div", "report-disclaimer");
   disclaimer.append(element("strong", "", "Clinical decision support only — not a diagnosis. "));
-  disclaimer.append(document.createTextNode("Visual observations and patient-provided context are documented separately from any clinical impression, tests or plan entered by the practitioner. The prototype does not infer diagnoses, recommend investigations or provide treatment advice. Image quality, lighting and capture conditions may limit interpretation. A qualified practitioner must review the original image, full clinical context and report and determine any appropriate next steps."));
+  disclaimer.append(document.createTextNode("Recorded measurements, visual observations and patient-provided context are documented separately from any diagnosis, tests or plan entered by the practitioner. The prototype does not analyze images, interpret vital signs, infer diagnoses, recommend investigations or provide treatment advice. Image quality, lighting and capture conditions may limit practitioner interpretation. A qualified practitioner must review the original image, full clinical context and report and determine any appropriate next steps."));
   report.append(disclaimer);
   const metadata = element("div", "report-meta");
   metadata.append(element("span", "", `Record ID: ${record.id}`));

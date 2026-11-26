@@ -2,7 +2,6 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   buildReportSections,
-  buildAssessmentSummary,
   calculateBMI,
   createAssessmentRecord,
   getPatientTimeline,
@@ -118,47 +117,11 @@ test("structured reports contain observations and no diagnostic inference", () =
   const report = sections.flatMap((section) => [section.title, ...section.lines]).join("\n");
   assert.match(report, /Appears pink/);
   assert.match(report, /Symptoms or concerns: Not recorded/);
-  assert.match(report, /Clinical impression \/ working diagnosis: Not entered by practitioner/);
-  assert.match(report, /Diagnosis: not generated automatically; practitioner impression not entered/);
+  assert.match(report, /Diagnosis report: clinician-entered findings & plan/);
+  assert.match(report, /Clinical diagnosis \/ impression: Not entered by practitioner/);
   assert.match(report, /Tests or investigations considered: Not entered by practitioner/);
   assert.match(report, /Practitioner plan \/ follow-up: Not entered by practitioner/);
   assert.doesNotMatch(report, /AI[- ](?:recommended|diagnosis)|auto-generated diagnosis/i);
-});
-
-test("generated assessment summary uses the patient's entered values without clinical inference", () => {
-  const record = createAssessmentRecord({
-    ...validInput,
-    patientName: "Fictional test patient",
-    age: "35",
-    sex: "Female",
-    country: "India",
-    heightCm: "165",
-    weightKg: "62.5",
-    temperatureC: "36.7",
-    heartRateBpm: "72",
-    systolicMmHg: "118",
-    diastolicMmHg: "76",
-    color: "Appears pink",
-    coating: "Thin / light",
-    symptoms: "Fictional dry mouth example",
-    symptomDuration: "2 days",
-  });
-  const summary = buildAssessmentSummary(record).join("\n");
-  assert.match(summary, /Fictional test patient; 35 years, Female, India/);
-  assert.match(summary, /blood pressure 118 \/ 76 mmHg/);
-  assert.match(summary, /BMI screening: 23\.0 kg\/m²/);
-  assert.match(summary, /temperature 36\.7 °C/);
-  assert.match(summary, /height 165 cm; weight 62\.5 kg/);
-  assert.match(summary, /Tongue image: provided for practitioner review; not analyzed/);
-  assert.match(summary, /color: Appears pink; coating: Thin \/ light/);
-  assert.match(summary, /reported concern: Fictional dry mouth example; duration: 2 days/);
-  assert.match(summary, /Diagnosis: not generated automatically/);
-  assert.match(summary, /does not interpret vital signs or tongue appearance/);
-});
-
-test("generated assessment summary retains only a clinician-entered diagnosis", () => {
-  const record = createAssessmentRecord({ ...validInput, clinicalImpression: "Practitioner-entered impression" });
-  assert.match(buildAssessmentSummary(record).join("\n"), /Diagnosis: Practitioner-entered impression/);
 });
 
 test("report carries practitioner-entered impression and investigation planning without generating either", () => {
@@ -168,7 +131,7 @@ test("report carries practitioner-entered impression and investigation planning 
     testsConsidered: "Practitioner-selected investigations",
     practitionerPlan: "Practitioner-entered follow-up plan",
   });
-  const section = buildReportSections(record).find((item) => item.title === "Practitioner assessment & plan (clinician-entered)");
+  const section = buildReportSections(record).find((item) => item.title === "Diagnosis report: clinician-entered findings & plan");
   assert.match(section.lines[0], /Practitioner-entered impression/);
   assert.match(section.lines[1], /Practitioner-selected investigations/);
   assert.match(section.lines[2], /Practitioner-entered follow-up plan/);

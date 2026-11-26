@@ -159,7 +159,7 @@
                   </div>
                   <label class="field"><span>Additional practitioner notes</span><textarea name="notes" rows="3" placeholder="Optional notes, limitations or follow-up questions"></textarea></label>
                   <div class="subsection-label">Practitioner assessment &amp; plan</div>
-                  <p class="field-hint">Saving this form generates a factual summary of the entered measurements and observations. It does not generate a diagnosis or recommend investigations; those remain for a qualified practitioner.</p>
+                  <p class="field-hint">Saving creates a diagnosis-report layout with the entered measurements and observations. A qualified practitioner must enter and review the diagnosis, investigations, and plan; the prototype does not infer them.</p>
                   <label class="field"><span>Clinical impression / working diagnosis</span><textarea name="clinicalImpression" rows="3" placeholder="Practitioner-authored impression; leave blank if not established"></textarea></label>
                   <label class="field"><span>Tests or investigations considered</span><textarea name="testsConsidered" rows="3" placeholder="Enter only investigations you determine are appropriate for this patient"></textarea></label>
                   <label class="field"><span>Practitioner plan / follow-up</span><textarea name="practitionerPlan" rows="3" placeholder="Practitioner-authored next steps or follow-up"></textarea></label>
@@ -193,7 +193,7 @@
         </section>
 
         <section class="view" id="report-view" aria-labelledby="report-title">
-          <div class="page-heading"><div><div class="eyebrow">STRUCTURED CLINICAL RECORD</div><h1 id="report-title">Assessment report</h1><p class="page-subtitle" id="report-subtitle"></p></div><div class="heading-actions"><button class="button button-secondary" id="print-report" type="button">Print report</button><button class="button button-secondary" data-go="history" type="button">Back to history</button></div></div>
+          <div class="page-heading"><div><div class="eyebrow">CLINICIAN-COMPLETED REPORT</div><h1 id="report-title">Diagnosis report</h1><p class="page-subtitle" id="report-subtitle"></p></div><div class="heading-actions"><button class="button button-secondary" id="print-report" type="button">Print report</button><button class="button button-secondary" data-go="history" type="button">Back to history</button></div></div>
           <article id="report-content" class="panel report-sheet"></article>
         </section>
       </main>
