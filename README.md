@@ -1,6 +1,6 @@
 # Preventive Health Assessment prototype
 
-A dependency-free, browser-only prototype for a practitioner-led tongue image observation workflow. It supports image capture, descriptive observations, patient-reported symptoms, duration, pain and dry mouth, age, sex, country/region, height, weight, body temperature, blood pressure and heart rate, BMI calculation with age-appropriate reference wording, longitudinal follow-up by demo ID, printable structured reports, clinician-entered impressions and investigation planning, and a source-linked public-health reference panel. Three clearly labeled fictional records can be loaded to preview reports.
+A dependency-free, browser-only prototype for a practitioner-led tongue image observation workflow. It supports image capture, descriptive observations, patient-reported symptoms, duration, pain and dry mouth, age, sex, country/region, height, weight, body temperature, blood pressure and heart rate, BMI calculation with age-appropriate reference wording, longitudinal follow-up by demo ID, printable structured reports, clinician-entered impressions and investigation planning, and a source-linked public-health reference panel. Each saved assessment includes a generated factual summary of that patient's entered information; it does not generate a diagnosis or recommend tests. Three clearly labeled fictional records can be loaded to preview reports.
 
 ## Install as a browser app
 
