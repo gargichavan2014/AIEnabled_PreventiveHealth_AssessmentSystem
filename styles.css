@@ -195,6 +195,94 @@ h1 { margin: 7px 0 5px; font-size: clamp(25px, 3vw, 31px); font-weight: 700; let
 .report-disclaimer { margin-top: 12px; padding: 12px; border: 1px solid #e9dec6; border-radius: 7px; background: #fffbf1; color: #766641; font-size: 9px; line-height: 1.6; }
 .report-meta { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line); color: #87938c; font-size: 9px; }
 
+.diagnosis-preview { margin-top: 10px; }
+.diagnosis-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+.diagnosis-actions .button { min-height: 33px; font-size: 10px; }
+.diagnosis-banner { margin: 14px 0 16px; padding: 14px; border: 1px solid #d8e5dc; border-radius: 9px; background: #f8fbf9; }
+.diagnosis-banner.risk-urgent { border-color: #ebc8c4; background: #fff6f5; }
+.diagnosis-banner.risk-moderate { border-color: #ecdcb8; background: #fffbf2; }
+.diagnosis-banner.risk-low { border-color: #cde3d4; background: #f3faf5; }
+.diagnosis-banner.risk-incomplete { border-color: #dde3df; background: #f8faf9; }
+.diagnosis-banner-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 10px; }
+.diagnosis-headline { color: #2b3f34; font-size: 11px; line-height: 1.4; }
+.risk-pill { display: inline-flex; align-items: center; padding: 4px 9px; border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.risk-pill.risk-urgent { background: #fbe1de; color: #9a3028; }
+.risk-pill.risk-moderate { background: #faeccf; color: #8b5b14; }
+.risk-pill.risk-low { background: #dff1e4; color: #196444; }
+.risk-pill.risk-incomplete { background: #eaeeeb; color: #5b6961; }
+.vital-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 11px; }
+.vital-chip { padding: 4px 8px; border: 1px solid #e1e8e3; border-radius: 6px; background: #fff; color: #4a5c52; font-size: 9px; font-weight: 600; }
+.vital-chip.vital-urgent { border-color: #e9bab5; background: #fff0ee; color: #9a3028; }
+.vital-chip.vital-abnormal { border-color: #ecd4aa; background: #fff7e6; color: #8a5a12; }
+.vital-chip.vital-borderline { border-color: #e7dfb8; background: #fffdf0; color: #756320; }
+.vital-chip.vital-normal { border-color: #cce3d3; background: #eef8f1; color: #1f6848; }
+.vital-chip.vital-unrecorded { color: #849189; font-weight: 400; }
+.diagnosis-cards { display: grid; gap: 8px; }
+.diagnosis-card { padding: 10px 11px; border: 1px solid #e4ece6; border-radius: 7px; background: #fff; }
+.diagnosis-card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+.diagnosis-card-head strong { color: #263b30; font-size: 10px; }
+.diagnosis-likelihood { padding: 2px 7px; border-radius: 999px; background: #edf4ef; color: #2f5e48; font-size: 8px; font-weight: 700; }
+.diagnosis-params { display: block; margin-bottom: 4px; color: #5e7467; font-size: 9px; font-weight: 600; }
+.diagnosis-card p { margin: 0; color: #57685e; font-size: 9px; line-height: 1.5; }
+.diagnosis-preview-lists { display: grid; gap: 8px; margin-top: 10px; padding: 11px 12px; border: 1px solid #e4ece6; border-radius: 8px; background: #fcfdfc; }
+.diagnosis-preview-lists strong { display: block; margin-bottom: 4px; color: #3d5246; font-size: 9px; text-transform: uppercase; letter-spacing: .5px; }
+.diagnosis-preview-lists ul { margin: 0; padding-left: 16px; color: #58695f; font-size: 9px; line-height: 1.5; }
+
+.report-eyebrow { margin-bottom: 4px; color: var(--green); }
+.report-status-stack { display: grid; justify-items: end; gap: 6px; }
+.status-badge-text { font-size: 10px; font-weight: 700; }
+.status-badge-text.risk-urgent { color: var(--red); }
+.status-badge-text.risk-moderate { color: var(--amber); }
+.status-badge-text.risk-low { color: var(--green-dark); }
+.status-badge-text.risk-incomplete { color: var(--muted); }
+.report-card-block { margin: 16px 0; padding: 16px 18px; border: 1px solid #e2e9e4; border-radius: 10px; background: #fff; }
+.report-primary-impression { border-color: #cde3d3; border-left: 4px solid var(--green); background: #f4faf6; }
+.report-block-title { margin-bottom: 10px; color: #365c47; font-size: 9px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; }
+.primary-impression-headline { margin: 0 0 6px; color: #193025; font-size: 15px; font-weight: 700; }
+.primary-impression-copy { margin: 0; color: #445a4f; font-size: 10px; line-height: 1.6; }
+.report-kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; margin: 14px 0; }
+.report-kpi-card { padding: 13px 15px; border: 1px solid #e3ebe5; border-radius: 9px; background: #fbfdfc; }
+.report-kpi-label { color: #6d7f74; font-size: 8px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; }
+.report-kpi-value { display: block; margin: 5px 0 3px; color: #1d3129; font-size: 14px; font-weight: 700; }
+.report-kpi-sub { display: block; color: #6c7b73; font-size: 9px; line-height: 1.4; }
+.differential-list { display: grid; gap: 10px; }
+.differential-card { padding: 13px 15px; border: 1px solid #eadcbe; border-left: 4px solid #c9973b; border-radius: 8px; background: #fffdf7; }
+.differential-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.differential-head strong { color: #24382d; font-size: 11px; }
+.differential-badge { padding: 2px 8px; border-radius: 999px; background: #faeccf; color: #8b5b14; font-size: 8px; font-weight: 700; }
+.differential-line { margin: 0 0 5px; color: #47594f; font-size: 9.5px; line-height: 1.55; }
+.differential-line:last-child { margin-bottom: 0; }
+.eval-table-wrap { overflow-x: auto; }
+.eval-table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+.eval-table th { padding: 8px 10px; border-bottom: 1px solid #dbe4de; color: #687b70; font-size: 8px; font-weight: 700; letter-spacing: .7px; text-align: left; text-transform: uppercase; }
+.eval-table td { padding: 10px; border-bottom: 1px solid #eef2ef; vertical-align: top; line-height: 1.5; color: #43554b; }
+.eval-table tr:last-child td { border-bottom: 0; }
+.eval-domain { font-weight: 700; color: #22372c; white-space: nowrap; }
+.eval-status { font-weight: 700; white-space: nowrap; }
+.eval-status.tone-ok { color: #1c6b47; }
+.eval-status.tone-warn { color: #9c6216; }
+.eval-status.tone-urgent { color: #a93c32; }
+.eval-status.tone-muted { color: #7e8b84; font-weight: 600; }
+.report-bullet-list { display: grid; gap: 6px; margin: 0; padding-left: 18px; color: #3d5146; font-size: 10px; line-height: 1.55; }
+.report-diet-block { border-color: #cde3d3; border-left: 4px solid #2f8a63; background: #f8fcf9; }
+.clinician-override-note { margin-top: 10px; padding: 9px 11px; border-radius: 6px; background: #f4f8f5; color: #364b40; font-size: 9.5px; line-height: 1.5; }
+.clinician-override-note p { margin: 0 0 4px; }
+.clinician-override-note p:last-child { margin-bottom: 0; }
+.report-image-box { display: grid; place-items: center; padding: 12px; margin-bottom: 10px; border: 1px solid #e7ece8; border-radius: 8px; background: #fbfdfc; }
+.report-image-box img { max-width: 240px; max-height: 180px; border-radius: 6px; object-fit: contain; }
+.capture-context-line { margin: 0 0 5px; color: #47594f; font-size: 9.5px; line-height: 1.5; }
+.ref-chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.ref-chip { display: inline-flex; align-items: center; padding: 5px 10px; border: 1px solid #dce6df; border-radius: 999px; background: #f9fbfa; color: #296348; font-size: 8.5px; font-weight: 600; text-decoration: none; }
+.ref-chip:hover { border-color: var(--green); background: var(--green-pale); }
+.report-collection { display: grid; gap: 22px; }
+.batch-summary-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; max-width: 950px; margin-bottom: 0; padding: 14px 18px; border-color: #cde3d3; background: #f4faf6; }
+.batch-summary-bar strong { display: block; color: #1d3129; font-size: 12px; }
+.batch-summary-bar small { display: block; margin-top: 2px; color: #5b6d63; font-size: 10px; }
+@media print {
+  .batch-summary-bar { display: none !important; }
+  .report-sheet + .report-sheet { break-before: page; }
+}
+
 [hidden] { display: none !important; }
 @media (max-width: 980px) {
   .sidebar { width: 205px; padding-right: 13px; padding-left: 13px; }

@@ -33,6 +33,9 @@
       ],
       scope: "CDC adult categories are for ages 20 and older. Children and teens need age- and sex-specific BMI-for-age assessment; do not apply adult cutoffs.",
       url: "https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html",
+      extraLinks: [
+        { label: "CDC BMI overview", url: "https://www.cdc.gov/bmi/about/index.html" },
+      ],
     },
     {
       organization: "World Health Organization",
@@ -45,6 +48,9 @@
       ],
       scope: "WHO global reference. Individual assessment still requires clinical context and the applicable local guidance.",
       url: "https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight",
+      extraLinks: [
+        { label: "WHO BMI-for-age growth reference (5–19 years)", url: "https://www.who.int/tools/growth-reference-data-for-5to19-years/indicators/bmi-for-age" },
+      ],
     },
     {
       organization: "National Institutes of Health",

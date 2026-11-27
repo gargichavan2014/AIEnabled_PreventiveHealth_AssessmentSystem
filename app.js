@@ -1,4 +1,4 @@
-const { buildReportSections, calculateBMI, createAssessmentRecord, getPatientTimeline, interpretBMI, normalizePatientId, validateAssessment } = window.AssessmentDomain;
+const { buildReportSections, calculateBMI, createAssessmentRecord, generateBatchDiagnosisReports, generateDiagnosticAssessment, getPatientTimeline, interpretBMI, normalizePatientId, validateAssessment } = window.AssessmentDomain;
 const healthEvidence = window.HealthEvidence;
 const syntheticSampleAssessments = window.SyntheticSampleAssessments;
 
@@ -119,6 +119,15 @@ function renderEvidenceCard(source, compact = false) {
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   card.append(link);
+  if (!compact && Array.isArray(source.extraLinks)) {
+    source.extraLinks.forEach((extra) => {
+      const extraLink = element("a", "evidence-link", `${extra.label} ↗`);
+      extraLink.href = extra.url;
+      extraLink.target = "_blank";
+      extraLink.rel = "noopener noreferrer";
+      card.append(extraLink);
+    });
+  }
   return card;
 }
 
@@ -137,6 +146,85 @@ function updateBMIPreview() {
   const bmi = calculateBMI(form.elements.heightCm.value, form.elements.weightKg.value);
   document.querySelector("#bmi-preview-value").textContent = bmi === null ? "—" : bmi.toFixed(1);
   document.querySelector("#bmi-preview-interpretation").textContent = interpretBMI(bmi, form.elements.age.value);
+}
+
+function collectDraftRecordFromForm() {
+  const values = Object.fromEntries(new FormData(form).entries());
+  return createAssessmentRecord({
+    ...values,
+    patientId: values.patientId || "PREVIEW",
+    patientName: values.patientName || "Current patient",
+    date: values.date || new Date().toISOString().slice(0, 10),
+    imageDataUrl: currentImageDataUrl,
+  });
+}
+
+function riskClassName(riskLevel) {
+  const normalized = String(riskLevel ?? "incomplete").toLowerCase();
+  return ["urgent", "moderate", "low", "incomplete"].includes(normalized) ? `risk-${normalized}` : "risk-incomplete";
+}
+
+function renderDiagnosisBanner(diagnosis) {
+  const banner = element("div", `diagnosis-banner ${riskClassName(diagnosis.riskLevel)}`);
+  const top = element("div", "diagnosis-banner-top");
+  const pill = element("span", `risk-pill ${riskClassName(diagnosis.riskLevel)}`, `${diagnosis.riskLevel} priority`);
+  top.append(pill, element("strong", "diagnosis-headline", diagnosis.riskSummary));
+  banner.append(top);
+
+  const chips = element("div", "vital-chips");
+  diagnosis.vitalFlags.forEach((flag) => {
+    const chip = element("span", `vital-chip vital-${flag.status}`, `${flag.label}: ${flag.value}`);
+    chip.title = flag.detail;
+    chips.append(chip);
+  });
+  banner.append(chips);
+
+  const cards = element("div", "diagnosis-cards");
+  diagnosis.primaryImpressions.forEach((item) => {
+    const card = element("div", "diagnosis-card");
+    const cardHead = element("div", "diagnosis-card-head");
+    cardHead.append(element("strong", "", item.title));
+    cardHead.append(element("span", "diagnosis-likelihood", item.likelihood));
+    card.append(cardHead);
+    if (item.matchedParameters.length) {
+      card.append(element("small", "diagnosis-params", `Matched parameters: ${item.matchedParameters.join(" · ")}`));
+    }
+    card.append(element("p", "", item.rationale));
+    cards.append(card);
+  });
+  banner.append(cards);
+  return banner;
+}
+
+function updateDiagnosisPreview() {
+  const container = document.querySelector("#diagnosis-preview");
+  if (!container) return;
+  const draft = collectDraftRecordFromForm();
+  const diagnosis = generateDiagnosticAssessment(draft);
+  container.replaceChildren();
+  container.append(renderDiagnosisBanner(diagnosis));
+
+  const nextWrap = element("div", "diagnosis-preview-lists");
+  const testsBlock = element("div");
+  testsBlock.append(element("strong", "", "Suggested investigations"));
+  const testList = element("ul");
+  diagnosis.recommendedTests.slice(0, 4).forEach((t) => testList.append(element("li", "", t)));
+  testsBlock.append(testList);
+
+  const planBlock = element("div");
+  planBlock.append(element("strong", "", "Suggested care & preventive plan"));
+  const planList = element("ul");
+  diagnosis.carePlan.slice(0, 4).forEach((step) => planList.append(element("li", "", step)));
+  planBlock.append(planList);
+
+  const dietBlock = element("div");
+  dietBlock.append(element("strong", "", "Suggested diet & nutrition"));
+  const dietList = element("ul");
+  diagnosis.suggestedDiet.slice(0, 4).forEach((dietItem) => dietList.append(element("li", "", dietItem)));
+  dietBlock.append(dietList);
+
+  nextWrap.append(testsBlock, planBlock, dietBlock);
+  container.append(nextWrap);
 }
 
 function showFormError(message) {
@@ -227,6 +315,7 @@ form.addEventListener("submit", (event) => {
   updateBMIPreview();
   currentImageDataUrl = "";
   preview.hidden = true;
+  updateDiagnosisPreview();
   showFormError("");
   renderReport(record);
 });
@@ -238,50 +327,330 @@ function reportSection(section) {
   return wrapper;
 }
 
-function renderReport(record) {
-  document.querySelector("#report-subtitle").textContent = `${record.patientId} · ${record.date}`;
-  const report = document.querySelector("#report-content");
-  report.replaceChildren();
-  const header = element("div", "report-topline");
+function buildReportArticleElement(record) {
+  const report = element("article", "panel report-sheet");
+  const diagnosis = generateDiagnosticAssessment(record);
+  const bmi = record.bmi ?? calculateBMI(record.heightCm, record.weightKg);
+
+  const header = element("div", "report-topline report-topline-clinical");
   const title = element("div");
-  title.append(element("h2", "", record.isSynthetic ? "Synthetic diagnosis-report template" : "Diagnosis report"));
-  title.append(element("p", "", record.isSynthetic ? "Fictional example — diagnosis field is for clinician completion" : "Recorded parameters and clinician-entered diagnostic conclusion"));
-  const status = element("div", "report-status");
+  title.append(element("div", "eyebrow report-eyebrow", "CAREFORM CLINICAL DECISION SUPPORT · PATIENT DIAGNOSIS REPORT"));
+  title.append(element("h2", "", "Patient Diagnosis Report"));
+  const subParts = [
+    record.patientName || "Patient",
+    `Patient ID: ${record.patientId}`,
+    `Age/Sex: ${record.age ? `${record.age}y` : "—"} / ${record.sex || "Not recorded"}`,
+    record.country ? `Country: ${record.country}` : "",
+    `Date: ${record.date}`,
+  ].filter(Boolean);
+  title.append(element("p", "", subParts.join(" · ")));
+  const status = element("div", "report-status report-status-stack");
+  status.append(element("span", `status-badge-text ${riskClassName(diagnosis.riskLevel)}`, diagnosis.statusLabel));
   status.append(statusPill(record));
   header.append(title, status);
   report.append(header);
+
   if (record.isSynthetic) {
     const sampleBanner = element("div", "sample-report-banner");
-    sampleBanner.append(element("strong", "", "SYNTHETIC SAMPLE — NOT A REAL PATIENT"));
-    sampleBanner.append(element("p", "", "Fictional values are shown only to demonstrate the prototype. No diagnosis, test recommendation, or treatment plan is generated."));
+    sampleBanner.append(element("strong", "", "SYNTHETIC SAMPLE — NOT A REAL PATIENT: "));
+    sampleBanner.append(document.createTextNode("Fictional clinical values from the repository are evaluated below to demonstrate a complete parameter-driven Diagnosis Report."));
     report.append(sampleBanner);
   }
 
-  const grid = element("div", "report-grid");
-  buildReportSections(record).forEach((section) => grid.append(reportSection(section)));
-  const imageSection = element("section", "report-section");
-  imageSection.append(element("h3", "", "Image reference"));
+  // 1. Primary Diagnostic Impression
+  const sec1 = element("section", "report-card-block report-primary-impression");
+  sec1.append(element("div", "report-block-title", "1. PRIMARY DIAGNOSTIC IMPRESSION (SYNTHESIZED FROM ASSESSMENT PARAMETERS)"));
+  sec1.append(element("h3", "primary-impression-headline", diagnosis.primaryHeadline));
+  sec1.append(element("p", "primary-impression-copy", diagnosis.primarySummary));
+  report.append(sec1);
+
+  // 4 Summary KPI Cards
+  const kpiGrid = element("div", "report-kpi-grid");
+  const kpiCards = [
+    {
+      label: "TONGUE VISUALS",
+      value: record.color || "Not assessed",
+      sub: [record.coating || "Coating not assessed", record.moisture || "Moisture not assessed"].join(" · "),
+    },
+    {
+      label: "BMI SCREENING",
+      value: bmi === null ? "Not calculated" : `${bmi.toFixed(1)} kg/m²`,
+      sub: interpretBMI(bmi, record.age).replace("Adult BMI screening reference: ", "").replace("; not a diagnosis.", ""),
+    },
+    {
+      label: "HEMODYNAMICS & TEMP",
+      value: (record.systolicMmHg || record.diastolicMmHg) ? `${record.systolicMmHg || "—"} / ${record.diastolicMmHg || "—"} mmHg` : "BP not recorded",
+      sub: [record.heartRateBpm ? `HR ${record.heartRateBpm} bpm` : "HR —", record.temperatureC ? `${record.temperatureC}°C` : "Temp —"].join(" · "),
+    },
+    {
+      label: "SYMPTOM BURDEN",
+      value: record.painScore !== "" && record.painScore !== undefined ? `Pain ${record.painScore}/10` : "Pain not scored",
+      sub: record.symptomDuration ? `Duration: ${record.symptomDuration}` : (record.symptoms ? "Symptoms noted" : "Duration not recorded"),
+    },
+  ];
+  kpiCards.forEach((kpi) => {
+    const card = element("div", "report-kpi-card");
+    card.append(element("div", "report-kpi-label", kpi.label));
+    card.append(element("strong", "report-kpi-value", kpi.value));
+    card.append(element("small", "report-kpi-sub", kpi.sub));
+    kpiGrid.append(card);
+  });
+  report.append(kpiGrid);
+
+  // 2. Differential Diagnoses & Clinical Correlations
+  const sec2 = element("section", "report-card-block");
+  sec2.append(element("div", "report-block-title", "2. DIFFERENTIAL DIAGNOSES & CLINICAL CORRELATIONS"));
+  const diffList = element("div", "differential-list");
+  diagnosis.primaryImpressions.forEach((item) => {
+    const card = element("div", "differential-card");
+    const head = element("div", "differential-head");
+    head.append(element("strong", "", item.title));
+    head.append(element("span", "differential-badge", item.likelihood));
+    card.append(head);
+    const trig = element("p", "differential-line");
+    trig.append(element("strong", "", "Triggering parameters: "));
+    trig.append(document.createTextNode(item.matchedParameters.join("; ") || "General clinical parameters"));
+    card.append(trig);
+    const interp = element("p", "differential-line");
+    interp.append(element("strong", "", "Diagnostic interpretation: "));
+    interp.append(document.createTextNode(item.rationale));
+    card.append(interp);
+    diffList.append(card);
+  });
+  sec2.append(diffList);
+  report.append(sec2);
+
+  // 3. Parameter-by-Parameter Diagnostic Evaluation Table
+  const sec3 = element("section", "report-card-block");
+  sec3.append(element("div", "report-block-title", "3. PARAMETER-BY-PARAMETER DIAGNOSTIC EVALUATION"));
+  const tableWrap = element("div", "eval-table-wrap");
+  const table = element("table", "eval-table");
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  ["PARAMETER DOMAIN", "RECORDED VALUE", "FINDING STATUS", "DIAGNOSTIC MEANING"].forEach((col) => {
+    headRow.append(element("th", "", col));
+  });
+  thead.append(headRow);
+  table.append(thead);
+  const tbody = document.createElement("tbody");
+  diagnosis.parameterEvaluations.forEach((row) => {
+    const tr = document.createElement("tr");
+    tr.append(element("td", "eval-domain", row.domain));
+    tr.append(element("td", "eval-value", row.recordedValue));
+    tr.append(element("td", `eval-status tone-${row.tone}`, row.status));
+    tr.append(element("td", "eval-meaning", row.meaning));
+    tbody.append(tr);
+  });
+  table.append(tbody);
+  tableWrap.append(table);
+  sec3.append(tableWrap);
+  report.append(sec3);
+
+  // 4. Recommended Investigations & Workup
+  const sec4 = element("section", "report-card-block");
+  sec4.append(element("div", "report-block-title", "4. RECOMMENDED INVESTIGATIONS & WORKUP"));
+  const invList = element("ul", "report-bullet-list");
+  diagnosis.recommendedTests.forEach((testItem) => invList.append(element("li", "", testItem)));
+  sec4.append(invList);
+  if (record.testsConsidered) {
+    const extraTests = element("p", "clinician-override-note");
+    extraTests.append(element("strong", "", "Clinician-entered tests: "));
+    extraTests.append(document.createTextNode(record.testsConsidered));
+    sec4.append(extraTests);
+  }
+  report.append(sec4);
+
+  // 5. Management & Follow-Up Plan
+  const sec5 = element("section", "report-card-block");
+  sec5.append(element("div", "report-block-title", "5. MANAGEMENT & FOLLOW-UP PLAN"));
+  const mgmtList = element("ul", "report-bullet-list");
+  diagnosis.carePlan.forEach((step) => mgmtList.append(element("li", "", step)));
+  sec5.append(mgmtList);
+  if (record.clinicalImpression || record.practitionerPlan) {
+    const overrideNote = element("div", "clinician-override-note");
+    if (record.clinicalImpression) {
+      const p1 = element("p", "");
+      p1.append(element("strong", "", "Clinician impression: "));
+      p1.append(document.createTextNode(record.clinicalImpression));
+      overrideNote.append(p1);
+    }
+    if (record.practitionerPlan) {
+      const p2 = element("p", "");
+      p2.append(element("strong", "", "Clinician follow-up plan: "));
+      p2.append(document.createTextNode(record.practitionerPlan));
+      overrideNote.append(p2);
+    }
+    sec5.append(overrideNote);
+  }
+  report.append(sec5);
+
+  // 6. Suggested Diet & Nutritional Guidance
+  const secDiet = element("section", "report-card-block report-diet-block");
+  secDiet.append(element("div", "report-block-title", "6. SUGGESTED DIET & NUTRITIONAL GUIDANCE"));
+  const dietList = element("ul", "report-bullet-list");
+  diagnosis.suggestedDiet.forEach((dietItem) => dietList.append(element("li", "", dietItem)));
+  secDiet.append(dietList);
+  report.append(secDiet);
+
+  // 7. Visual Capture Context & Reference Basis
+  const sec6 = element("section", "report-card-block");
+  sec6.append(element("div", "report-block-title", "7. VISUAL CAPTURE CONTEXT & REFERENCE BASIS"));
+  const imgBox = element("div", "report-image-box");
   if (record.imageDataUrl) {
     const image = document.createElement("img");
     image.src = record.imageDataUrl;
     image.alt = "Tongue image provided for this observation record";
-    imageSection.append(image);
+    imgBox.append(image);
   } else {
-    imageSection.append(element("p", "", record.isSynthetic ? "No image is included in this synthetic sample." : "No saved image."));
+    imgBox.append(element("p", "field-hint", record.isSynthetic ? "No tongue photograph attached in this synthetic demo record." : "No saved image."));
   }
-  grid.append(imageSection);
-  report.append(grid);
+  sec6.append(imgBox);
+
+  const metaLines = [
+    [
+      `Capture setting: ${record.captureSetting || "Not recorded"}`,
+      `Certainty: ${record.certainty || "Not recorded"}`,
+      `Shape / surface: ${record.shape || "Not assessed"}`,
+    ].join(" · "),
+    record.otherFeatures ? `Other features: ${record.otherFeatures}` : "",
+    record.notes ? `Practitioner notes: ${record.notes}` : "",
+  ].filter(Boolean);
+  metaLines.forEach((line) => sec6.append(element("p", "capture-context-line", line)));
+
+  const refChips = element("div", "ref-chip-row");
+  healthEvidence.forEach((src) => {
+    const a = element("a", "ref-chip", `${src.organization.replace("World Health Organization", "WHO").replace("U.S. Centers for Disease Control and Prevention", "CDC").replace("National Institutes of Health", "NIH").replace("ICMR–National Institute of Nutrition", "ICMR–NIN").replace("Mayo Clinic · public education", "Mayo Clinic")}: ${src.title} ↗`);
+    a.href = src.url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    refChips.append(a);
+    (src.extraLinks || []).forEach((extra) => {
+      const extraChip = element("a", "ref-chip", `${extra.label} ↗`);
+      extraChip.href = extra.url;
+      extraChip.target = "_blank";
+      extraChip.rel = "noopener noreferrer";
+      refChips.append(extraChip);
+    });
+  });
+  sec6.append(refChips);
+  report.append(sec6);
 
   const disclaimer = element("div", "report-disclaimer");
-  disclaimer.append(element("strong", "", "Clinical decision support only — not a diagnosis. "));
-  disclaimer.append(document.createTextNode("Recorded measurements, visual observations and patient-provided context are documented separately from any diagnosis, tests or plan entered by the practitioner. The prototype does not analyze images, interpret vital signs, infer diagnoses, recommend investigations or provide treatment advice. Image quality, lighting and capture conditions may limit practitioner interpretation. A qualified practitioner must review the original image, full clinical context and report and determine any appropriate next steps."));
+  disclaimer.append(element("strong", "", "Clinical Decision Support Disclaimer: "));
+  disclaimer.append(document.createTextNode(diagnosis.disclaimer));
   report.append(disclaimer);
+
   const metadata = element("div", "report-meta");
   metadata.append(element("span", "", `Record ID: ${record.id}`));
-  metadata.append(element("span", "", `Practitioner: ${record.reviewer || "Review pending"}`));
-  metadata.append(element("span", "", `Saved: ${new Date(record.createdAt).toLocaleString()}`));
+  metadata.append(element("span", "", `Practitioner review: ${record.reviewer ? `${record.reviewer}${record.reviewedAt ? ` (${new Date(record.reviewedAt).toLocaleString()})` : ""}` : "Review pending"}`));
+  metadata.append(element("span", "", `Generated: ${new Date().toLocaleString()}`));
   report.append(metadata);
+  return report;
+}
+
+function renderReport(record) {
+  document.querySelector("#report-subtitle").textContent = `${record.patientId} · ${record.date}`;
+  const container = document.querySelector("#report-content");
+  container.replaceChildren(buildReportArticleElement(record));
   showView("report");
+}
+
+function renderAllLivePatientReports({ includeSynthetic = false } = {}) {
+  const container = document.querySelector("#report-content");
+  container.replaceChildren();
+  const liveBatch = generateBatchDiagnosisReports(assessments, { liveOnly: true, latestPerPatient: false });
+  const allBatch = generateBatchDiagnosisReports(assessments, { liveOnly: false, latestPerPatient: false });
+  const showingLiveOnly = liveBatch.length > 0 && !includeSynthetic;
+  const activeBatch = showingLiveOnly ? liveBatch : allBatch;
+
+  if (activeBatch.length === 0) {
+    document.querySelector("#report-subtitle").textContent = "No saved patients in workspace";
+    const emptyPanel = element("div", "panel report-sheet");
+    const empty = element("div", "empty-state");
+    empty.append(element("span", "empty-icon", "＋"));
+    empty.append(element("h2", "", "No patient assessments saved yet"));
+    empty.append(element("p", "", "Create a new assessment for a live patient (or load the synthetic samples from Overview) to generate diagnosis reports."));
+    const startBtn = element("button", "button button-primary", "Start assessment");
+    startBtn.type = "button";
+    startBtn.addEventListener("click", () => showView("assessment"));
+    empty.append(startBtn);
+    emptyPanel.append(empty);
+    container.append(emptyPanel);
+    showView("report");
+    return;
+  }
+
+  document.querySelector("#report-subtitle").textContent = showingLiveOnly
+    ? `${liveBatch.length} live ${liveBatch.length === 1 ? "patient" : "patients"} · Parameter-based reports`
+    : `${allBatch.length} ${allBatch.length === 1 ? "patient" : "patients"} (${liveBatch.length} live, ${allBatch.length - liveBatch.length} synthetic demo)`;
+
+  const summaryBar = element("div", "panel batch-summary-bar");
+  const summaryCopy = element("div");
+  summaryCopy.append(element("strong", "", showingLiveOnly
+    ? `Generated ${liveBatch.length} live patient diagnosis ${liveBatch.length === 1 ? "report" : "reports"}`
+    : (liveBatch.length === 0
+      ? `No live patients saved yet — showing ${allBatch.length} synthetic demo ${allBatch.length === 1 ? "report" : "reports"}`
+      : `Generated ${allBatch.length} total diagnosis reports (${liveBatch.length} live + ${allBatch.length - liveBatch.length} synthetic)`)));
+  summaryCopy.append(element("small", "", "Each report uses the patient's latest recorded assessment parameters. Print or download HTML to archive."));
+  summaryBar.append(summaryCopy);
+
+  if (liveBatch.length > 0 && allBatch.length > liveBatch.length) {
+    const toggleBtn = element("button", "button button-secondary", includeSynthetic ? "Show live patients only" : "Include synthetic samples");
+    toggleBtn.type = "button";
+    toggleBtn.addEventListener("click", () => renderAllLivePatientReports({ includeSynthetic: !includeSynthetic }));
+    summaryBar.append(toggleBtn);
+  }
+  container.append(summaryBar);
+
+  activeBatch.forEach(({ record }) => {
+    container.append(buildReportArticleElement(record));
+  });
+  showView("report");
+}
+
+function collectPortableCss() {
+  const rules = [];
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) rules.push(rule.cssText);
+    } catch {
+      // Ignore cross-origin sheets if any.
+    }
+  }
+  return rules.join("\n");
+}
+
+function downloadVisibleReportsHtml() {
+  const container = document.querySelector("#report-content");
+  if (!container || !container.children.length) return;
+  const clone = container.cloneNode(true);
+  clone.querySelectorAll(".batch-summary-bar").forEach((el) => el.remove());
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Careform — Patient Diagnosis Report</title>
+<style>
+${collectPortableCss()}
+body { background: #f5f8f6; padding: 24px 16px; }
+.export-shell { max-width: 960px; margin: 0 auto; display: grid; gap: 22px; }
+@media print { body { padding: 0; background: #fff; } }
+</style>
+</head>
+<body>
+<div class="export-shell">${clone.innerHTML}</div>
+</body>
+</html>`;
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "patient-diagnosis-reports.html";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function showHistoryError(message) {
@@ -352,6 +721,9 @@ document.querySelector("#history-search").addEventListener("keydown", (event) =>
   if (event.key === "Enter") searchHistory();
 });
 document.querySelector("#print-report").addEventListener("click", () => window.print());
+document.querySelector("#download-report-html")?.addEventListener("click", downloadVisibleReportsHtml);
+document.querySelector("#generate-all-reports")?.addEventListener("click", () => renderAllLivePatientReports());
+document.querySelector("#history-generate-all")?.addEventListener("click", () => renderAllLivePatientReports());
 document.querySelector("#load-synthetic-samples").addEventListener("click", () => {
   const sampleIds = new Set(syntheticSampleAssessments.map((record) => record.id));
   const hasExistingSamples = assessments.some((record) => record.isSynthetic && sampleIds.has(record.id));
@@ -369,7 +741,27 @@ document.querySelector("#load-synthetic-samples").addEventListener("click", () =
 ["heightCm", "weightKg", "age"].forEach((name) => {
   form.elements[name].addEventListener("input", updateBMIPreview);
 });
+form.addEventListener("input", updateDiagnosisPreview);
+form.addEventListener("change", updateDiagnosisPreview);
+document.querySelector("#generate-diagnosis-btn")?.addEventListener("click", updateDiagnosisPreview);
+document.querySelector("#open-draft-report-btn")?.addEventListener("click", () => {
+  renderReport(collectDraftRecordFromForm());
+});
+document.querySelector("#apply-diagnosis-btn")?.addEventListener("click", () => {
+  const diagnosis = generateDiagnosticAssessment(collectDraftRecordFromForm());
+  form.elements.clinicalImpression.value = diagnosis.primaryImpressions
+    .map((item) => `${item.title} (${item.likelihood}): ${item.rationale}`)
+    .join("\n");
+  form.elements.testsConsidered.value = diagnosis.recommendedTests.join("\n");
+  form.elements.practitionerPlan.value = [
+    ...diagnosis.carePlan,
+    "",
+    "Suggested diet & nutritional guidance:",
+    ...diagnosis.suggestedDiet.map((item) => `- ${item}`),
+  ].join("\n");
+});
 updateBMIPreview();
+updateDiagnosisPreview();
 document.querySelector("#install-app").hidden = false;
 document.querySelector("#today-label").textContent = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date());
 form.elements.date.value = new Date().toISOString().slice(0, 10);

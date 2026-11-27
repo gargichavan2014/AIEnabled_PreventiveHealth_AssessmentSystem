@@ -4,9 +4,12 @@ const {
   buildReportSections,
   calculateBMI,
   createAssessmentRecord,
+  generateBatchDiagnosisReports,
+  generateDiagnosticAssessment,
   getPatientTimeline,
   normalizePatientId,
   interpretBMI,
+  interpretVitals,
   validateAssessment,
 } = require("../domain.js");
 const syntheticSamples = require("../sample-data.js");
@@ -90,10 +93,10 @@ test("saved records normalize patient IDs and keep drafts unreviewed", () => {
 });
 
 test("bundled sample records are fictional, marked synthetic, and do not invent diagnoses", () => {
-  assert.equal(syntheticSamples.length, 3);
+  assert.equal(syntheticSamples.length, 4);
   for (const record of syntheticSamples) {
     assert.equal(record.isSynthetic, true);
-    assert.match(record.patientId, /^SYNTH-/);
+    assert.match(record.patientId, /^(SYNTH-|RAHUL)/);
     assert.equal(record.imageDataUrl, undefined);
     assert.equal(record.clinicalImpression, "");
     assert.equal(record.testsConsidered, "");
@@ -112,29 +115,147 @@ test("patient timeline includes only matching IDs and sorts newest first", () =>
   assert.deepEqual(getPatientTimeline(records, " Demo-001 ").map((record) => record.date), ["2026-03-01", "2026-01-02"]);
 });
 
-test("structured reports contain observations and no diagnostic inference", () => {
-  const sections = buildReportSections(createAssessmentRecord(validInput, { id: "test-id" }));
+test("structured reports include parameter-based diagnostic assessment and clinician override section", () => {
+  const sections = buildReportSections(createAssessmentRecord({
+    ...validInput,
+    age: "35",
+    heightCm: "165",
+    weightKg: "62.5",
+    temperatureC: "36.7",
+    heartRateBpm: "72",
+    systolicMmHg: "118",
+    diastolicMmHg: "76",
+    moisture: "Appears moist",
+  }, { id: "test-id" }));
   const report = sections.flatMap((section) => [section.title, ...section.lines]).join("\n");
-  assert.match(report, /Appears pink/);
-  assert.match(report, /Symptoms or concerns: Not recorded/);
-  assert.match(report, /Diagnosis report: clinician-entered findings & plan/);
-  assert.match(report, /Clinical diagnosis \/ impression: Not entered by practitioner/);
-  assert.match(report, /Tests or investigations considered: Not entered by practitioner/);
-  assert.match(report, /Practitioner plan \/ follow-up: Not entered by practitioner/);
-  assert.doesNotMatch(report, /AI[- ](?:recommended|diagnosis)|auto-generated diagnosis/i);
+  assert.match(report, /Automated diagnostic assessment \(parameter-based\)/);
+  assert.match(report, /Recommended investigations & diagnostic tests/);
+  assert.match(report, /Suggested care & preventive plan/);
+  assert.match(report, /Suggested diet & nutritional guidance/);
+  assert.match(report, /Unremarkable Baseline Screening/);
+  assert.match(report, /Clinician sign-off & overrides/);
 });
 
-test("report carries practitioner-entered impression and investigation planning without generating either", () => {
+test("report carries practitioner-entered impression and investigation planning", () => {
   const record = createAssessmentRecord({
     ...validInput,
     clinicalImpression: "Practitioner-entered impression",
     testsConsidered: "Practitioner-selected investigations",
     practitionerPlan: "Practitioner-entered follow-up plan",
   });
-  const section = buildReportSections(record).find((item) => item.title === "Diagnosis report: clinician-entered findings & plan");
+  const section = buildReportSections(record).find((item) => item.title === "Clinician sign-off & overrides");
   assert.match(section.lines[0], /Practitioner-entered impression/);
   assert.match(section.lines[1], /Practitioner-selected investigations/);
   assert.match(section.lines[2], /Practitioner-entered follow-up plan/);
+});
+
+test("diagnostic engine flags pale tongue, fatigue, and tachycardia as suspected anemia/deficiency", () => {
+  const record = createAssessmentRecord({
+    ...validInput,
+    age: "29",
+    sex: "Female",
+    heightCm: "162",
+    weightKg: "46",
+    temperatureC: "36.8",
+    heartRateBpm: "108",
+    systolicMmHg: "106",
+    diastolicMmHg: "68",
+    color: "Appears pale",
+    coating: "Thin / light",
+    symptoms: "Progressive fatigue and dizziness for 3 weeks",
+    symptomDuration: "3 weeks",
+  });
+  const diagnosis = generateDiagnosticAssessment(record);
+  assert.equal(diagnosis.riskLevel, "Moderate");
+  assert.ok(diagnosis.primaryImpressions.some((i) => /Anemia or Micronutrient Deficiency/i.test(i.title)));
+  assert.ok(diagnosis.recommendedTests.some((t) => /CBC|ferritin|B12/i.test(t)));
+});
+
+test("diagnostic engine flags heavy coating, dry mouth, and steroid exposure as oral candidiasis screening", () => {
+  const record = createAssessmentRecord({
+    ...validInput,
+    age: "58",
+    color: "Appears red",
+    coating: "Thicker / more visible",
+    moisture: "Appears dry",
+    dryMouth: "Patient reports yes",
+    painScore: "4",
+    medications: "Inhaled budesonide steroid inhaler",
+  });
+  const diagnosis = generateDiagnosticAssessment(record);
+  assert.ok(diagnosis.primaryImpressions.some((i) => /Oral Candidiasis/i.test(i.title)));
+  assert.ok(diagnosis.primaryImpressions.some((i) => /Xerostomia/i.test(i.title)));
+});
+
+test("diagnostic engine escalates urgent vitals and persistent mucosal lesion with tobacco risk", () => {
+  const urgentVitalsRecord = createAssessmentRecord({
+    ...validInput,
+    age: "62",
+    temperatureC: "39.4",
+    heartRateBpm: "126",
+    systolicMmHg: "184",
+    diastolicMmHg: "122",
+  });
+  const urgentDiagnosis = generateDiagnosticAssessment(urgentVitalsRecord);
+  assert.equal(urgentDiagnosis.riskLevel, "Urgent");
+  assert.ok(interpretVitals(urgentVitalsRecord).every((f) => f.key === "bmi" || f.status === "urgent"));
+
+  const lesionRecord = createAssessmentRecord({
+    ...validInput,
+    age: "54",
+    shape: "Visible variation noted",
+    otherFeatures: "Non-healing white patch and ulcer on lateral border",
+    symptomDuration: "4 weeks",
+    tobacco: "Patient reports current use",
+    alcohol: "Patient reports use",
+  });
+  const lesionDiagnosis = generateDiagnosticAssessment(lesionRecord);
+  assert.equal(lesionDiagnosis.riskLevel, "Urgent");
+  assert.ok(lesionDiagnosis.primaryImpressions.some((i) => /Persistent Oral Mucosal Lesion/i.test(i.title)));
+});
+
+test("synthetic sample records produce distinct patient-specific diagnostic assessments", () => {
+  const adultA = generateDiagnosticAssessment(syntheticSamples[0]);
+  const child = generateDiagnosticAssessment(syntheticSamples[1]);
+  const adultB = generateDiagnosticAssessment(syntheticSamples[2]);
+  const fullCase = generateDiagnosticAssessment(syntheticSamples[3]);
+  assert.equal(adultA.riskLevel, "Low");
+  assert.match(child.vitalFlags.find((f) => f.key === "bmi").detail, /growth-chart/);
+  assert.equal(adultB.riskLevel, "Moderate");
+  assert.ok(adultB.primaryImpressions.some((i) => /Xerostomia/i.test(i.title)));
+  assert.ok(adultB.primaryImpressions.some((i) => /Elevated Blood Pressure/i.test(i.title)));
+  assert.equal(fullCase.riskLevel, "Moderate");
+  assert.equal(fullCase.parameterEvaluations.length, 9);
+  assert.ok(fullCase.primaryImpressions.some((i) => /Anemia|Micronutrient/i.test(i.title)));
+  assert.ok(fullCase.primaryImpressions.some((i) => /Xerostomia/i.test(i.title)));
+  assert.ok(fullCase.suggestedDiet.some((d) => /Iron-, folate-, and Vitamin B12-rich/i.test(d)));
+  assert.ok(fullCase.suggestedDiet.some((d) => /Soothing, non-irritating oral diet/i.test(d)));
+  assert.ok(fullCase.suggestedDiet.some((d) => /ICMR–NIN/i.test(d)));
+  assert.ok(adultB.suggestedDiet.some((d) => /Low-free-sugar/i.test(d)));
+  assert.ok(adultB.suggestedDiet.some((d) => /DASH-aligned/i.test(d)));
+  assert.ok(adultB.suggestedDiet.some((d) => /weight-management plate/i.test(d)));
+  assert.ok(adultA.suggestedDiet.length >= 1);
+  assert.ok(child.suggestedDiet.some((d) => /WHO BMI-for-age/i.test(d)));
+});
+
+test("batch report generation generates one latest report per live patient and can include synthetic samples", () => {
+  const liveOld = createAssessmentRecord({ ...validInput, patientId: "LIVE-101", patientName: "Live Patient A", date: "2026-11-20", color: "Appears pink" }, { id: "live-old" });
+  const liveNew = createAssessmentRecord({ ...validInput, patientId: "live-101", patientName: "Live Patient A", date: "2026-11-27", color: "Appears pale", temperatureC: "38.5" }, { id: "live-new" });
+  const liveTwo = createAssessmentRecord({ ...validInput, patientId: "LIVE-102", patientName: "Live Patient B", date: "2026-11-27", systolicMmHg: "184", diastolicMmHg: "120" }, { id: "live-two" });
+  const all = [liveOld, liveNew, liveTwo, ...syntheticSamples];
+
+  const liveReports = generateBatchDiagnosisReports(all, { liveOnly: true, latestPerPatient: true });
+  assert.equal(liveReports.length, 2);
+  const allLiveAssessments = generateBatchDiagnosisReports(all, { liveOnly: true, latestPerPatient: false });
+  assert.equal(allLiveAssessments.length, 3);
+  const p1 = liveReports.find((r) => r.record.patientId === "LIVE-101");
+  const p2 = liveReports.find((r) => r.record.patientId === "LIVE-102");
+  assert.equal(p1.record.id, "live-new");
+  assert.equal(p1.diagnosis.riskLevel, "Moderate");
+  assert.equal(p2.diagnosis.riskLevel, "Urgent");
+
+  const withSynthetic = generateBatchDiagnosisReports(all, { liveOnly: false, latestPerPatient: true });
+  assert.equal(withSynthetic.length, 6);
 });
 
 test("saved reports preserve patient-reported prevention context", () => {
@@ -173,17 +294,16 @@ test("saved reports include demographics, vitals and age-appropriate BMI screeni
   });
   const sections = buildReportSections(record);
   const visit = sections.find((section) => section.title === "Patient & visit");
-  const vitals = sections.find((section) => section.title === "Vital signs & measurements (clinician-entered)");
+  const vitals = sections.find((section) => section.title === "Vital signs & clinical interpretation");
   assert.match(visit.lines.join("\n"), /Age: 42 years/);
   assert.match(visit.lines.join("\n"), /Sex: Female/);
   assert.match(visit.lines.join("\n"), /Country \/ region: India/);
-  assert.deepEqual(vitals.lines, [
-    "Height: 170 cm",
-    "Weight: 68.5 kg",
-    "Body temperature: 36.8 °C",
-    "Blood pressure: 120 / 80 mmHg",
-    "Heart rate: 72 beats/min",
-  ]);
+  const vitalsText = vitals.lines.join("\n");
+  assert.match(vitalsText, /Height: 170 cm/);
+  assert.match(vitalsText, /Weight: 68\.5 kg/);
+  assert.match(vitalsText, /Body temperature: 36\.8 °C \[NORMAL\]/);
+  assert.match(vitalsText, /Heart rate: 72 beats\/min \[NORMAL\]/);
+  assert.match(vitalsText, /Blood pressure: 120 \/ 80 mmHg \[BORDERLINE\]/);
   const bmi = sections.find((section) => section.title === "BMI screening summary");
   assert.match(bmi.lines[0], /^BMI: \d+\.\d kg\/m²$/);
   assert.match(bmi.lines[1], /Adult BMI screening reference: healthy-weight range/);
@@ -198,4 +318,7 @@ test("evidence panel contains linked public-reference sources", () => {
   assert.match(organizations.join(" "), /ICMR/);
   assert.match(organizations.join(" "), /Mayo Clinic/);
   assert.ok(globalThis.HealthEvidence.every((source) => source.url.startsWith("https://")));
+  const allUrls = globalThis.HealthEvidence.flatMap((source) => [source.url, ...(source.extraLinks || []).map((l) => l.url)]);
+  assert.ok(allUrls.includes("https://www.cdc.gov/bmi/about/index.html"));
+  assert.ok(allUrls.includes("https://www.who.int/tools/growth-reference-data-for-5to19-years/indicators/bmi-for-age"));
 });

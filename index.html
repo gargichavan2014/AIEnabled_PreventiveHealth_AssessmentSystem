@@ -53,11 +53,11 @@
         <section class="view active" id="dashboard-view" aria-labelledby="dashboard-title">
           <div class="page-heading">
             <div><div class="eyebrow">YOUR CLINICAL WORKSPACE</div><h1 id="dashboard-title">Overview</h1><p class="page-subtitle">A clear record of tongue observations and patient-provided context.</p></div>
-            <div class="page-actions"><button class="button button-secondary" id="load-synthetic-samples" type="button">Load synthetic samples</button><button class="button button-primary" data-go="assessment" type="button"><span aria-hidden="true">＋</span> Start assessment</button></div>
+            <div class="page-actions"><button class="button button-secondary" id="generate-all-reports" type="button">Generate live patient reports</button><button class="button button-secondary" id="load-synthetic-samples" type="button">Load synthetic samples</button><button class="button button-primary" data-go="assessment" type="button"><span aria-hidden="true">＋</span> Start assessment</button></div>
           </div>
 
-          <div class="notice notice-clinical"><span class="notice-symbol" aria-hidden="true">!</span><p><strong>Clinical decision support only.</strong> This prototype does not analyze images or diagnose conditions. A qualified practitioner must review every observation and report.</p></div>
-          <div class="sample-data-notice"><strong>Synthetic demo data only.</strong> Sample records are fictional and included to demonstrate report layouts; they are not real patients and contain no diagnoses.</div>
+          <div class="notice notice-clinical"><span class="notice-symbol" aria-hidden="true">!</span><p><strong>Clinical decision support.</strong> This system generates parameter-based diagnostic impressions, vital-sign interpretations, test suggestions, and preventive plans from entered patient data. A qualified practitioner must verify every image and report before clinical action.</p></div>
+          <div class="sample-data-notice"><strong>Synthetic demo data available.</strong> Load the four fictional sample patients to preview parameter-driven diagnosis reports; they are not real patients.</div>
           <p id="sample-data-status" class="field-hint" role="status" hidden></p>
 
           <div class="metric-grid" aria-label="Workspace summary">
@@ -81,7 +81,7 @@
 
         <section class="view" id="assessment-view" aria-labelledby="assessment-title">
           <div class="page-heading">
-            <div><div class="eyebrow">CLINICIAN WORKFLOW</div><h1 id="assessment-title">New assessment</h1><p class="page-subtitle">Record what is visible and what the patient reports. No automated diagnosis is generated.</p></div>
+            <div><div class="eyebrow">CLINICIAN WORKFLOW</div><h1 id="assessment-title">New assessment</h1><p class="page-subtitle">Enter patient parameters and observations to generate a structured diagnosis report for practitioner review.</p></div>
             <button class="button button-secondary" data-go="dashboard" type="button">Cancel</button>
           </div>
           <div class="notice notice-clinical compact"><span class="notice-symbol" aria-hidden="true">!</span><p>Use a consistent capture setup when possible. Photo observations are descriptive only and should be interpreted in the clinical context by a qualified practitioner.</p></div>
@@ -158,11 +158,19 @@
                     <label class="field"><span>Dental visit</span><select name="dentalVisit"><option value="">Not discussed</option><option>Reports routine dental visits</option><option>Reports no recent dental visit</option><option>Not recorded</option></select></label>
                   </div>
                   <label class="field"><span>Additional practitioner notes</span><textarea name="notes" rows="3" placeholder="Optional notes, limitations or follow-up questions"></textarea></label>
+                  <div class="subsection-label">Automated parameter-based diagnosis preview</div>
+                  <p class="field-hint">Live clinical decision-support results derived from vitals, BMI, visual observations, symptoms, and preventive context. Saving generates the full diagnosis report.</p>
+                  <div id="diagnosis-preview" class="diagnosis-preview" aria-live="polite"></div>
+                  <div class="diagnosis-actions">
+                    <button class="button button-secondary" id="generate-diagnosis-btn" type="button">Refresh diagnosis from parameters</button>
+                    <button class="button button-secondary" id="apply-diagnosis-btn" type="button">Populate clinician fields</button>
+                    <button class="button button-primary" id="open-draft-report-btn" type="button">Open full diagnosis report →</button>
+                  </div>
                   <div class="subsection-label">Practitioner assessment &amp; plan</div>
-                  <p class="field-hint">Saving creates a diagnosis-report layout with the entered measurements and observations. A qualified practitioner must enter and review the diagnosis, investigations, and plan; the prototype does not infer them.</p>
-                  <label class="field"><span>Clinical impression / working diagnosis</span><textarea name="clinicalImpression" rows="3" placeholder="Practitioner-authored impression; leave blank if not established"></textarea></label>
-                  <label class="field"><span>Tests or investigations considered</span><textarea name="testsConsidered" rows="3" placeholder="Enter only investigations you determine are appropriate for this patient"></textarea></label>
-                  <label class="field"><span>Practitioner plan / follow-up</span><textarea name="practitionerPlan" rows="3" placeholder="Practitioner-authored next steps or follow-up"></textarea></label>
+                  <p class="field-hint">Review, refine, or override the generated impressions, suggested investigations, and care plan below before signing off.</p>
+                  <label class="field"><span>Clinical impression / working diagnosis</span><textarea name="clinicalImpression" rows="3" placeholder="Optional clinician override or confirmation of generated diagnosis"></textarea></label>
+                  <label class="field"><span>Tests or investigations considered</span><textarea name="testsConsidered" rows="3" placeholder="Optional clinician-selected investigations (leave blank to use generated suggestions)"></textarea></label>
+                  <label class="field"><span>Practitioner plan / follow-up</span><textarea name="practitionerPlan" rows="3" placeholder="Optional clinician-authored follow-up plan"></textarea></label>
                 </section>
 
                 <section class="panel form-panel review-panel">
@@ -179,7 +187,7 @@
         </section>
 
         <section class="view" id="history-view" aria-labelledby="history-title">
-          <div class="page-heading"><div><div class="eyebrow">LONGITUDINAL FOLLOW-UP</div><h1 id="history-title">Patient history</h1><p class="page-subtitle">Find saved assessments by demo patient ID and review visits over time.</p></div><button class="button button-primary" data-go="assessment" type="button"><span aria-hidden="true">＋</span> New assessment</button></div>
+          <div class="page-heading"><div><div class="eyebrow">LONGITUDINAL FOLLOW-UP</div><h1 id="history-title">Patient history</h1><p class="page-subtitle">Find saved assessments by demo patient ID and review visits over time.</p></div><div class="page-actions"><button class="button button-secondary" id="history-generate-all" type="button">Generate live patient reports</button><button class="button button-primary" data-go="assessment" type="button"><span aria-hidden="true">＋</span> New assessment</button></div></div>
           <section class="panel search-panel"><label class="field"><span>Patient ID</span><div class="search-control"><input id="history-search" autocomplete="off" placeholder="Enter patient ID"><button id="search-button" class="button button-primary" type="button">Search</button></div></label></section>
           <section class="panel" id="history-results" aria-live="polite"><div class="empty-state"><span class="empty-icon">◷</span><h2>Search for a patient</h2><p>Enter the same patient ID used during assessment to see their visit timeline.</p></div></section>
           <p class="page-footnote">History is stored in this browser only. This demo is not encrypted, backed up, or suitable for real patient data.</p>
@@ -193,8 +201,8 @@
         </section>
 
         <section class="view" id="report-view" aria-labelledby="report-title">
-          <div class="page-heading"><div><div class="eyebrow">CLINICIAN-COMPLETED REPORT</div><h1 id="report-title">Diagnosis report</h1><p class="page-subtitle" id="report-subtitle"></p></div><div class="heading-actions"><button class="button button-secondary" id="print-report" type="button">Print report</button><button class="button button-secondary" data-go="history" type="button">Back to history</button></div></div>
-          <article id="report-content" class="panel report-sheet"></article>
+          <div class="page-heading"><div><div class="eyebrow">PARAMETER-BASED CLINICAL REPORT</div><h1 id="report-title">Diagnosis report</h1><p class="page-subtitle" id="report-subtitle"></p></div><div class="heading-actions"><button class="button button-secondary" id="download-report-html" type="button">Download HTML</button><button class="button button-secondary" id="print-report" type="button">Print report</button><button class="button button-secondary" data-go="history" type="button">Back to history</button></div></div>
+          <div id="report-content" class="report-collection"></div>
         </section>
       </main>
     </div>

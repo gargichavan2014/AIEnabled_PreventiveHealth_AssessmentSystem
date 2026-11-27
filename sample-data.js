@@ -82,10 +82,46 @@
       dryMouth: "Patient reports yes",
       notes: "Fictional values for workflow demonstration only. Vital signs are shown without interpretation; no image is attached.",
     },
+    {
+      id: "synthetic-full-004",
+      createdAt: "2026-11-26T09:00:00.000Z",
+      patientId: "RAHUL",
+      patientName: "Synthetic complete case — All schema parameters",
+      date: "2026-11-26",
+      age: "20",
+      sex: "Female",
+      country: "India",
+      captureSetting: "Clinical lighting",
+      heightCm: "168",
+      weightKg: "64.4",
+      temperatureC: "36.8",
+      heartRateBpm: "74",
+      systolicMmHg: "122",
+      diastolicMmHg: "78",
+      color: "Appears pale",
+      coating: "Thin / light",
+      moisture: "Appears dry",
+      shape: "Visible variation noted",
+      otherFeatures: "Mild central pallor with slight longitudinal fissuring and dry mucosal sheen under clinical lighting; no discrete ulceration observed.",
+      certainty: "High — features are clearly visible",
+      symptoms: "Mild tongue soreness with spicy foods and intermittent dry sensation",
+      symptomDuration: "10 days",
+      painScore: "3",
+      dryMouth: "Patient reports yes",
+      hydration: "Reports ~1.2 L water daily; increased tea/coffee intake over past week",
+      medications: "Occasional OTC antihistamine for seasonal rhinitis",
+      tobacco: "Patient reports none",
+      alcohol: "Patient reports none",
+      oralHygiene: "Brushes twice daily",
+      dentalVisit: "Reports no recent dental visit",
+      notes: "All schema parameters populated for end-to-end diagnostic synthesis.",
+      reviewer: "Dr. A. Clinician (Demo Reviewer)",
+      reviewed: true,
+    },
   ];
 
-  return examples.map(({ id, createdAt, ...input }) => createAssessmentRecord({
+  return examples.map(({ id, createdAt, reviewed, ...input }) => createAssessmentRecord({
     ...input,
     isSynthetic: true,
-  }, { id, createdAt }));
+  }, { id, createdAt, reviewed }));
 }));
